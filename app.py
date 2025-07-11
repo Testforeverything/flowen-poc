@@ -43,8 +43,8 @@ st.sidebar.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-language = st.sidebar.radio("🌐 Language", ["🇬🇧 English", "🇹🇭 ภาษาไทย"])
-menu = st.sidebar.radio("📂 Menu", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+language = st.sidebar.radio(" Language", ["🇬🇧 English", "🇹🇭 ภาษาไทย"])
+menu = st.sidebar.radio(" Menu", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
 
 # --- Load Data ---
 @st.cache_data
@@ -55,7 +55,7 @@ df = load_data()
 
 # --- Risk Overview Page ---
 if menu == "Risk Overview":
-    st.title("📊 Risk Overview")
+    st.title("Risk Overview")
 
     # --- Metrics Cards ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -68,7 +68,7 @@ if menu == "Risk Overview":
 
     # --- Top Accounts Section ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("🧠 Top 5 Accounts Likely to Pay (48h)")
+    st.subheader("Top 5 Accounts Likely to Pay (48h)")
     st.table(
         df.sort_values("ai_risk_score", ascending=False)
           .head(5)[["account_id", "name", "risk_score", "loan_type", "contact_channel"]]
@@ -84,7 +84,7 @@ if menu == "Risk Overview":
 
     # --- Inactive Accounts ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("🚨 Accounts Ignored 7+ Days")
+    st.subheader("Accounts Ignored 7+ Days")
     inactive = df[df["last_payment_days_ago"] > 30].sort_values("risk_score", ascending=False)
     st.dataframe(
         inactive[["account_id", "name", "risk_score", "last_payment_days_ago", "region"]]
@@ -101,7 +101,7 @@ if menu == "Risk Overview":
 
     # --- Pie Chart Segment ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📈 Behavior-Based Segmentation")
+    st.subheader("Behavior-Based Segmentation")
     segment_data = df["response_behavior"].value_counts().reset_index()
     segment_data.columns = ["Segment", "Count"]
     fig_segment = px.pie(
@@ -116,7 +116,7 @@ if menu == "Risk Overview":
 
     # --- Debtor Profile View ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("👤 Debtor Profile View")
+    st.subheader("Debtor Profile View")
     selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
     debtor = df[df["account_id"] == selected_account].iloc[0]
     st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
