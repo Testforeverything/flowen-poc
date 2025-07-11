@@ -1,426 +1,112 @@
+# Flowen: Debt Collection AI Dashboard (Full Layout & Theme)
+# - Thai/English toggle
+# - Logo Top-Left
+# - Professional color scheme (dark blue, teal, light blue, white)
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
-# ─── Page Config ─────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
+# --- Config ---
+st.set_page_config(layout="wide", page_title="Flowen Dashboard", page_icon="https://i.imgur.com/UOa1y7O.png")
 
-# ─── Custom Theme Colors (aligned with logo: green-blue-yellow) ──────────────
-st.markdown("""
-<style>
-    /* Sidebar background */
-    [data-testid="stSidebar"] {
-        background-color: #0A2342;
-    }
-    /* Sidebar text color */
-    .css-1d391kg .css-1kyxreq {
-        color: #FFFFFF !important;
-    }
-    /* Main Title font */
-    h1 {
-        color: #0A2342;
-    }
-    /* Metric card title and value */
-    .stMetric > div:nth-child(1) {
-        font-size: 2rem;
-        color: #0A2342;
-        font-weight: 600;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ─── Title with Top-Left Logo ─────────────────────────────────────────────────
-st.markdown(
-    f"""
-    <div style='display: flex; align-items: center; margin-bottom: 1rem;'>
-        <img src='https://i.imgur.com/UOa1y7O.png' width='50' style='margin-right: 10px;'/>
-        <h1 style='margin: 0; font-size: 1.8rem;'>Flowen: Debt Collection AI Dashboard</h1>
-    </div>
-    """, unsafe_allow_html=True
-)
-
-# Load data
+# --- Load Data ---
 @st.cache_data
+
 def load_data():
     return pd.read_csv("flowen_mock_data_1000.csv")
 
 df = load_data()
 
-# Sidebar menu
-st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
-menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+# --- Language Toggle ---
+lang = st.sidebar.radio("Language / ภาษา", ["EN", "TH"])
+def t(en, th):
+    return en if lang == "EN" else th
 
-# --- Risk Overview ---
+# --- Logo Top ---
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; margin-bottom: 1rem;'>
+        <img src='https://i.imgur.com/UOa1y7O.png' width='50' style='margin-right: 10px;'/>
+        <h1 style='margin: 0; font-size: 1.8rem;'>{t("Flowen: Debt Collection AI Dashboard", "Flowen: แพลตฟอร์มติดตามหนี้อัจฉริยะ")}</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-if menu == "Risk Overview":
-    st.title(" Risk Overview")
+# --- Sidebar ---
+st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=140)
+menu = st.sidebar.radio(t("Navigation", "เมนูหลัก"), [
+    t("Risk Overview", "ภาพรวมความเสี่ยง"),
+    t("Journey Management", "จัดการเส้นทางลูกหนี้"),
+    t("Recovery KPI", "ตัวชี้วัดการติดตามหนี้"),
+    t("Behavioral Insights", "พฤติกรรมลูกหนี้")
+])
 
-    # --- Real-Time Status Panel ---
-    st.markdown("###  Real-Time Status Panel")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric(" Accounts Contacted Today", "1,203")
-    col2.metric(" Responses Received", "645")
-    col3.metric(" Active Conversations", "53")
-    col4.metric(" Paid Within 24h", "32%")
+# --- Main Views ---
+if menu.startswith("Risk") or menu.startswith("ภาพรวม"):
+    st.subheader(t("Real-Time Status Panel", "สถิติแบบเรียลไทม์"))
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric(t("Accounts Contacted Today", "จำนวนที่ติดต่อวันนี้"), "1,203")
+    c2.metric(t("Responses Received", "ได้รับการตอบกลับ"), "645")
+    c3.metric(t("Active Conversations", "การสนทนาที่ดำเนินอยู่"), "53")
+    c4.metric(t("Paid Within 24h", "จ่ายภายใน 24 ชม."), "32%")
 
-    # --- AI Suggestion Feed ---
-    st.markdown("###  AI Suggestion Feed")
-    with st.expander("Top 5 Accounts Likely to Pay in 48h"):
-        st.table(
-            df.sort_values("ai_risk_score", ascending=False)
-              .head(5)[["account_id", "name", "risk_score", "loan_type", "contact_channel"]]
-              .rename(columns={
-                  "account_id": "Account ID",
-                  "name": "Name",
-                  "risk_score": "Risk Score",
-                  "loan_type": "Loan Type",
-                  "contact_channel": "Contact Channel"
-              })
-        )
+    st.subheader(t("AI Suggestion Feed", "คำแนะนำจาก AI"))
+    with st.expander(t("Top 5 Accounts Likely to Pay in 48h", "ลูกหนี้ที่มีแนวโน้มชำระภายใน 48 ชม.")):
+        st.table(df.sort_values("ai_risk_score", ascending=False)
+                   .head(5)[["account_id", "name", "risk_score", "loan_type", "contact_channel"]]
+                   .rename(columns={
+                        "account_id": t("Account ID", "รหัสบัญชี"),
+                        "name": t("Name", "ชื่อ"),
+                        "risk_score": t("Risk Score", "คะแนนความเสี่ยง"),
+                        "loan_type": t("Loan Type", "ประเภทเงินกู้"),
+                        "contact_channel": t("Channel", "ช่องทาง")
+                   }))
 
-    with st.expander("Accounts Ignored All Contact for 7+ Days"):
-        inactive = df[df["last_payment_days_ago"] > 30].sort_values("risk_score", ascending=False)
-        st.dataframe(
-            inactive[["account_id", "name", "risk_score", "last_payment_days_ago", "region"]]
-            .rename(columns={
-                "account_id": "Account ID",
-                "name": "Name",
-                "risk_score": "Risk Score",
-                "last_payment_days_ago": "Last Payment (Days Ago)",
-                "region": "Region"
-            }).head(5),
-            use_container_width=True
-        )
-
-    # --- Human vs AI Effectiveness Panel ---
-    st.markdown("### ⚖️ Human vs AI Effectiveness")
-    effect_data = pd.DataFrame({
-        "Method": ["AI Recommended Flow", "Manual Call", "Email Follow-up"],
-        "Success Rate (%)": [72, 51, 43],
-        "Avg Time to Payment (Days)": [2.5, 4.2, 5.1]
-    })
-    st.dataframe(effect_data)
-
-    # --- AI Self-Learning Indicator ---
-    st.markdown("###  AI Self-Learning System")
-    st.info(
-        "AI last retrained: **2 hours ago**  \n"
-        "Top new feature: **Contact Channel**  \n"
-        "Next model update in: **22 hours**"
-    )
-
-    # --- Debtor Segment Overview ---
-    st.markdown("###  Debtor Segment Overview")
-    segment_data = df["response_behavior"].value_counts().reset_index()
-    segment_data.columns = ["Segment", "Count"]
-    fig_segment = px.pie(segment_data, names="Segment", values="Count", hole=0.4, title="Behavior-Based Segmentation")
-    st.plotly_chart(fig_segment, use_container_width=True)
-
-    # --- Loan Type Distribution ---
-    st.markdown("###  Loan Type Distribution")
-    loan_dist = df["loan_type"].value_counts().reset_index()
-    loan_dist.columns = ["Loan Type", "Count"]
-    fig_loan = px.pie(
-        loan_dist,
-        names="Loan Type",
-        values="Count",
-        title="Loan Type Breakdown",
-        hole=0.4
-    )
-    st.plotly_chart(fig_loan, use_container_width=True)
-
-    # --- Payment Behavior by Age Group ---
-    st.markdown("###  Payment Delay by Age Group")
-    df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
-    age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
-    fig_age = px.bar(
-        age_dpd,
-        x="age_group",
-        y="dpd",
-        title="Average Days Past Due by Age Group",
-        labels={"dpd": "Avg DPD", "age_group": "Age Group"}
-    )
-    st.plotly_chart(fig_age, use_container_width=True)
-
-    # --- Debtor Summary Table ---
-    st.markdown("###  Debtor Summary")
-    st.dataframe(df[[
-        "account_id", "name", "risk_score", "total_debt", "dpd",
-        "loan_type", "region", "risk_level"
-    ]].rename(columns={
-        "account_id": "Account ID",
-        "name": "Name",
-        "risk_score": "Risk Score",
-        "total_debt": "Outstanding (฿)",
-        "dpd": "Days Past Due",
-        "loan_type": "Loan Type",
-        "region": "Region",
-        "risk_level": "Risk Level"
-    }), use_container_width=True)
-
-    # --- Debtor Profile Viewer ---
-    st.markdown("###  Debtor Profile Viewer")
-    selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
-    debtor = df[df["account_id"] == selected_account].iloc[0]
-    st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
-    st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
-    st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
-    st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
-    st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
-
-# --- Journey Management ---
-elif menu == "Journey Management":
-    st.title(" Journey Management Dashboard")
-
-    # --- Journey Funnel Overview ---
-    st.markdown("###  Journey Funnel Overview")
-    funnel_data = pd.DataFrame({
-        "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-        "Count": [8500, 5200, 2100, 865]
-    })
-    fig_funnel = px.funnel(funnel_data, x="Count", y="Stage", title="Debtor Funnel Progress")
-    st.plotly_chart(fig_funnel, use_container_width=True)
-
-    # --- Journey Type Performance ---
-    st.markdown("###  Journey Type Performance")
-    journey_perf = pd.DataFrame({
-        "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Prompt", "Manual Call"],
-        "Conversion Rate (%)": [31, 42, 38, 28],
-        "Avg Days to Pay": [4.2, 3.5, 4.0, 6.1]
-    })
-    st.dataframe(journey_perf)
-
-    # --- Time in Journey Distribution ---
-    st.markdown("###  Time in Journey by Risk Level")
-    risk_journey_time = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [2.5, 4.2, 6.7]
-    })
-    fig_time = px.bar(
-        risk_journey_time,
-        x="Risk Level",
-        y="Avg Days in Journey",
-        color="Risk Level",
-        title="Average Time in Journey"
-    )
-    st.plotly_chart(fig_time, use_container_width=True)
-
-    # --- Stuck Accounts Alert ---
-    st.markdown("###  Stuck Accounts Alert")
-    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
-    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    st.dataframe(
-        stuck_accounts[[
-            "account_id", "name", "dpd", "risk_level",
-            "last_payment_days_ago", "contact_channel"
-        ]].rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "dpd": "Days Past Due",
-            "risk_level": "Risk Level",
-            "last_payment_days_ago": "Last Payment (Days Ago)",
-            "contact_channel": "Contact Channel"
-        }),
-        use_container_width=True
-    )
-
-    # --- AI Journey Recommendation (Mock) ---
-    st.markdown("###  AI Journey Recommendation (Sample)")
-    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
-    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
-        "Low": "LINE Reminder A",
-        "Medium": "LINE Reminder B",
-        "High": "Voice Prompt"
-    })
-    st.dataframe(
-        rec_sample.rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "risk_level": "Risk Level",
-            "response_behavior": "Behavior",
-            "AI Recommended Journey": "AI Recommended Journey"
-        }),
-        use_container_width=True
-    )
-
-# --- Recovery KPI ---
-elif menu == "Recovery KPI":
-    st.title(" Recovery KPI Dashboard")
-
-    # --- KPI Summary ---
-    st.markdown("###  Recovery Overview (Month-to-date)")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Recovered", "฿12,850,000")
-    col2.metric("Recovery Rate", "64.7%")
-    col3.metric("Avg. Time to Recovery", "3.6 days")
-    col4.metric("Active Collectors", "12")
-
-    # --- Recovery Trend Chart ---
-    trend_data = pd.DataFrame({
-        "Date": pd.date_range("2025-07-01", periods=10, freq="D"),
-        "Recovered": [1000000, 1250000, 1380000, 1220000, 1500000, 1600000, 1700000, 1450000, 1550000, 1650000]
-    })
-    fig_trend = px.line(trend_data, x="Date", y="Recovered", markers=True, title="Daily Recovery Trend")
-    st.plotly_chart(fig_trend, use_container_width=True)
-
-    # --- Channel Effectiveness ---
-    st.markdown("###  Channel Effectiveness")
-    channel_perf = pd.DataFrame({
-        "Channel": ["LINE Bot", "Voice Bot", "Phone Call", "Email"],
-        "Success Rate (%)": [43, 38, 54, 22],
-        "Avg Recovery per Case": [850, 720, 1100, 460]
-    })
-    fig_bar = px.bar(
-        channel_perf,
-        x="Channel",
-        y="Success Rate (%)",
-        color="Channel",
-        title="Channel Success Rate"
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-    # --- Collector Performance ---
-    st.markdown("###  Collector Leaderboard")
-    collector_data = pd.DataFrame({
-        "Collector": ["Aon", "May", "Bee", "Tarn", "Jib"],
-        "Recovered (฿)": [1450000, 1380000, 1250000, 1190000, 950000],
-        "Cases Closed": [95, 87, 81, 74, 66]
-    })
-    st.dataframe(collector_data)
-
-    # --- Segment Recovery Overview ---
-    st.markdown("###  Recovery by Risk Level")
-    risk_seg = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Recovery Rate (%)": [72, 63, 44]
-    })
-    fig_seg = px.bar(
-        risk_seg,
-        x="Risk Level",
-        y="Recovery Rate (%)",
-        color="Risk Level",
-        title="Recovery Rate by Risk Group"
-    )
+    st.subheader(t("Debtor Segment Overview", "กลุ่มลูกหนี้ตามพฤติกรรม"))
+    seg = df["response_behavior"].value_counts().reset_index()
+    seg.columns = ["Segment", "Count"]
+    fig_seg = px.pie(seg, names="Segment", values="Count", hole=0.4)
     st.plotly_chart(fig_seg, use_container_width=True)
 
-    # --- Recovery Funnel ---
-    st.markdown("###  Recovery Conversion Funnel")
-    funnel_data = pd.DataFrame({
-        "Stage": ["Messaged", "Opened", "Responded", "Promised to Pay", "Paid"],
-        "Count": [18000, 14400, 9100, 3400, 1850]
-    })
-    fig_funnel = px.funnel(
-        funnel_data,
-        x="Count",
-        y="Stage",
-        title="End-to-End Recovery Funnel"
-    )
+    st.subheader(t("Loan Type Distribution", "การกระจายประเภทเงินกู้"))
+    loan = df["loan_type"].value_counts().reset_index()
+    loan.columns = ["Loan Type", "Count"]
+    fig_loan = px.pie(loan, names="Loan Type", values="Count", hole=0.4)
+    st.plotly_chart(fig_loan, use_container_width=True)
+
+    st.subheader(t("Payment Delay by Age Group", "ความล่าช้าตามช่วงอายุ"))
+    df["age_group"] = pd.cut(df["age"].astype(int), [0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
+    ag = df.groupby("age_group")["dpd"].mean().reset_index()
+    fig_ag = px.bar(ag, x="age_group", y="dpd", color="age_group",
+                    labels={"dpd": t("Avg DPD", "จำนวนวันโดยเฉลี่ย")},
+                    title=t("Average Days Past Due by Age Group", "จำนวนวันค้างชำระเฉลี่ยตามช่วงอายุ"))
+    st.plotly_chart(fig_ag, use_container_width=True)
+
+elif menu.startswith("Journey") or menu.startswith("จัดการ"):
+    st.subheader(t("Customer Funnel", "เส้นทางลูกหนี้"))
+    funnel = pd.DataFrame({"Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
+                           "Count": [8500, 5200, 2100, 865]})
+    fig_funnel = px.bar(funnel, x="Count", y="Stage", orientation="h")
     st.plotly_chart(fig_funnel, use_container_width=True)
 
-    # --- AI Journey Effectiveness Insight ---
-    st.markdown("###  AI Journey Effectiveness")
-    ai_journey = pd.DataFrame({
-        "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Push", "Aggressive Call"],
-        "Recovery Rate (%)": [28, 42, 38, 35],
-        "Best Segment": ["Low Risk", "Medium Risk", "High Risk", "Ignored Group"]
-    })
-    st.dataframe(ai_journey)
+elif menu.startswith("Recovery") or menu.startswith("ตัวชี้วัด"):
+    st.subheader(t("Total Recovery Rate", "อัตราการกู้คืนทั้งหมด"))
+    st.metric("", "65%")
+    st.subheader(t("Channel Success Rate", "อัตราสำเร็จของแต่ละช่องทาง"))
+    channels = pd.DataFrame({"Channel": ["LINE", "Phone", "Email"], "Success": [60, 54, 47]})
+    fig_channel = px.bar(channels, x="Channel", y="Success", color="Channel")
+    st.plotly_chart(fig_channel, use_container_width=True)
 
-    st.success(" Insight: LINE Reminder B has 42% recovery rate in Medium-Risk group. Consider promoting this journey.")
+elif menu.startswith("Behavioral") or menu.startswith("พฤติกรรม"):
+    st.subheader(t("Loan Type Distribution", "ประเภทเงินกู้"))
+    loan = df["loan_type"].value_counts().reset_index()
+    loan.columns = ["Loan Type", "Count"]
+    st.plotly_chart(px.pie(loan, names="Loan Type", values="Count", hole=0.4), use_container_width=True)
 
-
-# --- Behavioral Insights ---
-elif menu == "Behavioral Insights":
-    st.title(" Behavioral Insights Dashboard")
-
-    # --- 1. Response Behavior ---
-    st.markdown("###  Response Behavior")
-    response_counts = df["response_behavior"].value_counts().reset_index()
-    response_counts.columns = ["Behavior", "Count"]
-    fig_response = px.pie(
-        response_counts,
-        names="Behavior",
-        values="Count",
-        hole=0.4,
-        title="Customer Response Breakdown"
-    )
-    st.plotly_chart(fig_response, use_container_width=True)
-
-    # --- 2. Repayment Behavior ---
-    st.markdown("###  Repayment Timing")
-    repay_delay = pd.DataFrame({
-        "Delay (Days)": ["0–1", "2–3", "4–7", "8–14", "15+"],
-        "Paid Count": [350, 420, 300, 180, 90]
-    })
-    fig_repay = px.bar(
-        repay_delay,
-        x="Delay (Days)",
-        y="Paid Count",
-        title="Repayment after Reminder Timing"
-    )
-    st.plotly_chart(fig_repay, use_container_width=True)
-
-    # --- 3. Avoidance Pattern ---
-    st.markdown("###  Avoidance Pattern")
-    avoid = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
-    fig_avoid = px.bar(
-        avoid,
-        x="region",
-        y="Ignored Count",
-        color="region",
-        title="Avoidance by Region"
-    )
-    st.plotly_chart(fig_avoid, use_container_width=True)
-
-    # --- 4. Cash Flow Insight ---
-    st.markdown("###  Cash Flow Pattern")
-    fig_cash = px.histogram(
-        df,
-        x="monthly_income",
-        nbins=30,
-        title="Monthly Income Distribution"
-    )
-    st.plotly_chart(fig_cash, use_container_width=True)
-
-    # --- 5. Channel Suitability by Behavior ---
-    st.markdown("###  Channel vs Behavior")
-    chan_beh = df.groupby(["contact_channel", "response_behavior"]).size().reset_index(name="Count")
-    fig_chan = px.bar(
-        chan_beh,
-        x="contact_channel",
-        y="Count",
-        color="response_behavior",
-        barmode="group",
-        title="Contact Channel Performance by Behavior"
-    )
-    st.plotly_chart(fig_chan, use_container_width=True)
-
-    # --- 6. AI Insight Panel (Mock NLP Tags) ---
-    st.markdown("###  AI Insight Panel – NLP Behavior Tags")
-    st.info("AI analyzes conversation logs and assigns behavioral tags for smarter journey orchestration.")
-
-    ai_tags = pd.DataFrame({
-        "Sample Message": [
-            "ขอเลื่อน 3 วัน",
-            "ตอนนี้ไม่มีเงิน",
-            "ไม่ใช่หนี้ผม",
-            "จะจ่ายพรุ่งนี้",
-            "ไม่ตอบกลับ"
-        ],
-        "AI Tag": [
-            "Willing",
-            "Cashflow_Issue",
-            "Dispute",
-            "Pay_Intent",
-            "Silent"
-        ],
-        "Recommended Action": [
-            "Remind in 2 days",
-            "Pause & retry next payday",
-            "Send dispute form",
-            "Follow-up in 24h",
-            "Escalate to voice"
-        ]
-    })
-    st.dataframe(ai_tags)
+    st.subheader(t("Success Rate by Age Group", "อัตราสำเร็จตามอายุ"))
+    age = pd.cut(df["age"].astype(int), [0, 29, 39, 49, 100], labels=["18–29", "30–39", "40–49", "50+"])
+    success = df.assign(age_group=age).groupby("age_group")["ai_risk_score"].mean().reset_index()
+    fig = px.bar(success, x="age_group", y="ai_risk_score", labels={"ai_risk_score": t("Success Rate", "อัตราสำเร็จ")})
+    st.plotly_chart(fig, use_container_width=True)
