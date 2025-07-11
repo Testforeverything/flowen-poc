@@ -1,11 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from io import BytesIO
-#from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
+
 
 # ─── PAGE CONFIG ───────────────────────────────────────────
 st.set_page_config(page_title="Flowen Dashboard", layout="wide")
