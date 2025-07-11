@@ -50,7 +50,7 @@ df = load_data()
 # ─── SIDEBAR ───────────────────────────────────────────
 st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=160)
 lang = st.sidebar.selectbox("🌐 Language", ["🇬🇧 EN", "🇹🇭 TH"])
-menu = st.sidebar.radio("["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+menu = st.sidebar.radio("Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights")
 
 # ─── COLOR THEME ───────────────────────────────────────
 brand_colors = ["#2CA8D2", "#21B573", "#0A2342"]
