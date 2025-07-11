@@ -137,18 +137,78 @@ if menu == "Risk Overview":
 
 # --- Journey Management ---
 elif menu == "Journey Management":
-    st.subheader(" Journey Funnel")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Customers", "21,500")
-    col2.metric("Engagement Rate", "70%")
-    col3.metric("Active Journeys", "14,450")
+    st.title("📦 Journey Management Dashboard")
 
+    # --- Journey Funnel Overview ---
+    st.markdown("### 🔁 Journey Funnel Overview")
     funnel_data = pd.DataFrame({
         "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-        "Count": [12000, 7500, 3200, 1050]
+        "Count": [8500, 5200, 2100, 865]
     })
-    fig_funnel = px.bar(funnel_data, x="Count", y="Stage", orientation='h', title="Customer Funnel")
+    fig_funnel = px.funnel(funnel_data, x="Count", y="Stage", title="Debtor Funnel Progress")
     st.plotly_chart(fig_funnel, use_container_width=True)
+
+    # --- Journey Type Performance ---
+    st.markdown("### 📊 Journey Type Performance")
+    journey_perf = pd.DataFrame({
+        "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Prompt", "Manual Call"],
+        "Conversion Rate (%)": [31, 42, 38, 28],
+        "Avg Days to Pay": [4.2, 3.5, 4.0, 6.1]
+    })
+    st.dataframe(journey_perf)
+
+    # --- Time in Journey Distribution ---
+    st.markdown("### 🕒 Time in Journey by Risk Level")
+    risk_journey_time = pd.DataFrame({
+        "Risk Level": ["Low", "Medium", "High"],
+        "Avg Days in Journey": [2.5, 4.2, 6.7]
+    })
+    fig_time = px.bar(
+        risk_journey_time,
+        x="Risk Level",
+        y="Avg Days in Journey",
+        color="Risk Level",
+        title="Average Time in Journey"
+    )
+    st.plotly_chart(fig_time, use_container_width=True)
+
+    # --- Stuck Accounts Alert ---
+    st.markdown("### 🚥 Stuck Accounts Alert")
+    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
+    st.warning(f"⚠️ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
+    st.dataframe(
+        stuck_accounts[[
+            "account_id", "name", "dpd", "risk_level",
+            "last_payment_days_ago", "contact_channel"
+        ]].rename(columns={
+            "account_id": "Account ID",
+            "name": "Name",
+            "dpd": "Days Past Due",
+            "risk_level": "Risk Level",
+            "last_payment_days_ago": "Last Payment (Days Ago)",
+            "contact_channel": "Contact Channel"
+        }),
+        use_container_width=True
+    )
+
+    # --- AI Journey Recommendation (Mock) ---
+    st.markdown("### 🤖 AI Journey Recommendation (Sample)")
+    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
+    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
+        "Low": "LINE Reminder A",
+        "Medium": "LINE Reminder B",
+        "High": "Voice Prompt"
+    })
+    st.dataframe(
+        rec_sample.rename(columns={
+            "account_id": "Account ID",
+            "name": "Name",
+            "risk_level": "Risk Level",
+            "response_behavior": "Behavior",
+            "AI Recommended Journey": "AI Recommended Journey"
+        }),
+        use_container_width=True
+    )
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
