@@ -1,92 +1,134 @@
+import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
-try:
-    import streamlit as st
-except ModuleNotFoundError:
-    raise ImportError("This app requires Streamlit to run. Please install it using 'pip install streamlit' before executing.")
-
-st.set_page_config(page_title="Flowen Dashboard", layout="wide")
+st.set_page_config(layout="wide")
+st.title("🧠 Flowen: Debt Collection AI Dashboard")
 
 # Load data
-df = pd.read_csv("flowen_mock_data_1000.csv")
+@st.cache_data
+def load_data():
+    return pd.read_csv("flowen_mock_data_1000.csv")
 
-# ----- Custom CSS ----- #
-st.markdown("""
-    <style>
-        .main {
-            background: linear-gradient(135deg, #00b894, #0984e3);
-            color: #ffffff !important;
-        }
-        h2, .stMetric label, .stMarkdown, .stDataFrame, .css-1v0mbdj {
-            color: white !important;
-        }
-        .st-emotion-cache-1v0mbdj {
-            color: white !important;
-        }
-        .stMetric {
-            background-color: rgba(255,255,255,0.05);
-            padding: 1rem;
-            border-radius: 1rem;
-        }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
+df = load_data()
 
-# ----- Logo and Language Toggle ----- #
-col_logo, col_lang = st.columns([0.1, 0.9])
-with col_logo:
-    st.image("Flowen_Logo_Transparent.png", width=100)
-with col_lang:
-    lang = st.selectbox("", ["🇬🇧 EN", "🇹🇭 TH"])
+# Sidebar menu
+st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
+menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
 
-# ----- Title ----- #
-st.markdown(f"""
-    <h2 style='margin-bottom: 0;'>📊 Flowen - {'Debt Collection Dashboard' if lang=='🇬🇧 EN' else 'แดชบอร์ดบริหารการติดตามหนี้'}</h2>
-""", unsafe_allow_html=True)
+# --- Risk Overview ---
+if menu == "Risk Overview":
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Outstanding", "฿{:,.0f}".format(df["total_debt"].sum()))
+    with col2:
+        st.metric("Recovery Rate", "65%")
+    with col3:
+        st.metric("Delinquent Accounts", f"{df.shape[0]:,}")
 
-# ----- KPI Cards ----- #
-kpi1, kpi2, kpi3 = st.columns(3)
-with kpi1:
-    st.metric("Accounts" if lang == "🇬🇧 EN" else "บัญชีทั้งหมด", len(df))
-with kpi2:
-    st.metric("Avg. Risk Score", round(df['ai_risk_score'].mean(), 2))
-with kpi3:
-    escalated_count = df[df['status'] == 'Escalate'].shape[0] if "status" in df.columns else "N/A"
-    st.metric("Escalated", escalated_count)
-
-st.markdown("---")
-
-# ----- Charts Section ----- #
-chart1, chart2 = st.columns(2)
-with chart1:
-    fig1 = px.histogram(
-        df, x="ai_risk_score", nbins=20,
-        title="Risk Score Distribution" if lang == "🇬🇧 EN" else "การกระจายของคะแนนความเสี่ยง"
+    # Charts
+    risk_dist = df["risk_level"].value_counts()
+    fig_pie = px.pie(
+        names=risk_dist.index,
+        values=risk_dist.values,
+        hole=0.4,
+        title="Risk Distribution"
     )
-    fig1.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='white')
-    st.plotly_chart(fig1, use_container_width=True)
 
-with chart2:
-    if "risk_level" in df.columns:
-        donut = df['risk_level'].value_counts().reset_index()
-        donut.columns = ['risk_level', 'count']
-        fig2 = px.pie(
-            donut, names='risk_level', values='count', hole=0.4,
-            title="Risk Level Breakdown" if lang == "🇬🇧 EN" else "สัดส่วนระดับความเสี่ยง"
-        )
-        fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='white')
-        st.plotly_chart(fig2, use_container_width=True)
+    trend_data = pd.DataFrame({
+        "Month": ["May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+        "Recovered": [200000, 250000, 300000, 350000, 380000, 410000]
+    })
+    fig_line = px.line(trend_data, x="Month", y="Recovered", title="Recovery Trend")
 
-# ----- Table Section ----- #
-st.markdown("### 📋 Debtor Accounts" if lang == "🇬🇧 EN" else "### 📋 รายการบัญชีลูกหนี้")
-selected_cols = ["account_id", "loan_type", "dpd", "dpd_bucket", "ai_risk_score", "risk_level", "income_level"]
-if "status" in df.columns:
-    selected_cols.append("status")
+    col4, col5 = st.columns([2,1])
+    with col4:
+        st.plotly_chart(fig_line, use_container_width=True)
+    with col5:
+        st.plotly_chart(fig_pie, use_container_width=True)
 
-available_cols = [col for col in selected_cols if col in df.columns]
-st.dataframe(df[available_cols], use_container_width=True)
+    # Table
+    st.subheader("📋 Debtor Summary")
+    st.dataframe(df[[
+        "account_id", "name", "risk_score", "total_debt", "dpd", 
+        "loan_type", "region", "risk_level"
+    ]].rename(columns={
+        "account_id": "Account ID",
+        "name": "Name",
+        "risk_score": "Risk Score",
+        "total_debt": "Outstanding (฿)",
+        "dpd": "Days Past Due",
+        "loan_type": "Loan Type",
+        "region": "Region",
+        "risk_level": "Risk Level"
+    }), use_container_width=True)
+
+    # Debtor Profile
+    st.subheader("🔍 Debtor Profile Viewer")
+    selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
+    debtor = df[df["account_id"] == selected_account].iloc[0]
+    st.markdown(f"### {debtor['name']} (Account: {debtor['account_id']})")
+    st.write(f"**Risk Score:** {debtor['risk_score']} / **Risk Level:** {debtor['risk_level']}")
+    st.write(f"**Outstanding:** ฿{debtor['total_debt']:,} | **Days Past Due:** {debtor['dpd']} days")
+    st.write(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
+    st.write(f"**Contact Channel:** {debtor['contact_channel']}")
+
+    # Feature Importance (mock)
+    feature_names = ['dpd', 'last_payment_days_ago', 'monthly_income', 'income_level', 'loan_type']
+    importances = [0.28, 0.23, 0.20, 0.17, 0.12]
+    fig_imp = go.Figure(go.Bar(x=importances[::-1], y=feature_names[::-1], orientation='h'))
+    fig_imp.update_layout(title="Top Factors Contributing to AI Risk Score")
+    st.plotly_chart(fig_imp, use_container_width=True)
+
+# --- Journey Management ---
+elif menu == "Journey Management":
+    st.subheader("📦 Journey Funnel")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Customers", "21,500")
+    col2.metric("Engagement Rate", "70%")
+    col3.metric("Active Journeys", "14,450")
+
+    funnel_data = pd.DataFrame({
+        "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
+        "Count": [12000, 7500, 3200, 1050]
+    })
+    fig_funnel = px.bar(funnel_data, x="Count", y="Stage", orientation='h', title="Customer Funnel")
+    st.plotly_chart(fig_funnel, use_container_width=True)
+
+# --- Recovery KPI ---
+elif menu == "Recovery KPI":
+    st.subheader("📈 Recovery KPI Overview")
+    st.metric("Total Recovery Rate", "65%")
+
+    channel_data = pd.DataFrame({
+        "Channel": ["LINE", "Phone", "Email"],
+        "Success": [60, 54, 47]
+    })
+    fig_bar = px.bar(channel_data, x="Channel", y="Success", text="Success", title="Channel Success Rate")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    daily = pd.DataFrame({
+        "Day": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "Recovery": [100, 150, 200, 230, 250, 280, 300]
+    })
+    fig_trend = px.line(daily, x="Day", y="Recovery", markers=True, title="Daily Recovery Trend")
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+# --- Behavioral Insights ---
+elif menu == "Behavioral Insights":
+    st.subheader("👥 Behavioral Insights")
+    delay_reason = pd.DataFrame({
+        "Reason": ["Insufficient Funds", "Job Loss", "Medical Emergency"],
+        "Percent": [42, 36, 22]
+    })
+    fig_reason = px.bar(delay_reason, x="Percent", y="Reason", orientation='h', title="Payment Delay Reasons")
+    st.plotly_chart(fig_reason, use_container_width=True)
+
+    engagement = pd.DataFrame({
+        "Month": ["May", "Jul", "Aug", "Oct"],
+        "Phone Call": [35, 45, 55, 65],
+        "Email": [20, 28, 36, 44]
+    })
+    fig_engage = px.line(engagement, x="Month", y=["Phone Call", "Email"], title="Engagement Rate by Channel")
+    st.plotly_chart(fig_engage, use_container_width=True)
