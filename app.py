@@ -118,17 +118,62 @@ elif menu == "Recovery KPI":
 # --- Behavioral Insights ---
 elif menu == "Behavioral Insights":
     st.subheader("👥 Behavioral Insights")
-    delay_reason = pd.DataFrame({
-        "Reason": ["Insufficient Funds", "Job Loss", "Medical Emergency"],
-        "Percent": [42, 36, 22]
-    })
-    fig_reason = px.bar(delay_reason, x="Percent", y="Reason", orientation='h', title="Payment Delay Reasons")
-    st.plotly_chart(fig_reason, use_container_width=True)
 
-    engagement = pd.DataFrame({
-        "Month": ["May", "Jul", "Aug", "Oct"],
-        "Phone Call": [35, 45, 55, 65],
-        "Email": [20, 28, 36, 44]
-    })
-    fig_engage = px.line(engagement, x="Month", y=["Phone Call", "Email"], title="Engagement Rate by Channel")
-    st.plotly_chart(fig_engage, use_container_width=True)
+    # 1. Response Behavior (Pie Chart)
+    st.markdown("### 📨 Response Behavior")
+    response_counts = df["response_behavior"].value_counts()
+    fig_response = px.pie(
+        names=response_counts.index,
+        values=response_counts.values,
+        title="Customer Response Behavior",
+        hole=0.4
+    )
+    st.plotly_chart(fig_response, use_container_width=True)
+
+    # 2. Repayment Frequency (Bar Chart)
+    st.markdown("### 💸 Repayment Frequency")
+    repay_freq = df["payment_frequency"].value_counts().reset_index()
+    repay_freq.columns = ["Frequency", "Count"]
+    fig_freq = px.bar(
+        repay_freq,
+        x="Frequency",
+        y="Count",
+        color="Frequency",
+        title="Repayment Frequency Distribution"
+    )
+    st.plotly_chart(fig_freq, use_container_width=True)
+
+    # 3. Avoidance Pattern by Region (Bar Chart)
+    st.markdown("### 🚫 Avoidance Pattern by Region")
+    avoid_pattern = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
+    fig_avoid = px.bar(
+        avoid_pattern,
+        x="region",
+        y="Ignored Count",
+        color="region",
+        title="Avoidance Pattern by Region"
+    )
+    st.plotly_chart(fig_avoid, use_container_width=True)
+
+    # 4. Cash Flow Pattern (Histogram)
+    st.markdown("### 💵 Cash Flow Pattern (Monthly Income)")
+    fig_income = px.histogram(
+        df,
+        x="monthly_income",
+        nbins=30,
+        title="Distribution of Monthly Income"
+    )
+    st.plotly_chart(fig_income, use_container_width=True)
+
+    # 5. Personalization Feedback – Channel Effectiveness (Pie Chart)
+    st.markdown("### 📢 Personalization Feedback – Channel Effectiveness")
+    channel_perf = df["contact_channel"].value_counts().reset_index()
+    channel_perf.columns = ["Channel", "Count"]
+    fig_channel = px.pie(
+        channel_perf,
+        names="Channel",
+        values="Count",
+        hole=0.4,
+        title="Top Performing Contact Channels"
+    )
+    st.plotly_chart(fig_channel, use_container_width=True)
