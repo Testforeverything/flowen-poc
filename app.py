@@ -3,18 +3,41 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(layout="wide")
-st.title("Flowen: Debt Collection AI Dashboard")
+# ─── Page Config ─────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
 
-# ใส่โลโก้ด้านบน (Top‑Left)
+# ─── Custom Theme Colors (aligned with logo: green-blue-yellow) ──────────────
+st.markdown("""
+<style>
+    /* Sidebar background */
+    [data-testid="stSidebar"] {
+        background-color: #0A2342;
+    }
+    /* Sidebar text color */
+    .css-1d391kg .css-1kyxreq {
+        color: #FFFFFF !important;
+    }
+    /* Main Title font */
+    h1 {
+        color: #0A2342;
+    }
+    /* Metric card title and value */
+    .stMetric > div:nth-child(1) {
+        font-size: 2rem;
+        color: #0A2342;
+        font-weight: 600;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ─── Title with Top-Left Logo ─────────────────────────────────────────────────
 st.markdown(
     f"""
     <div style='display: flex; align-items: center; margin-bottom: 1rem;'>
         <img src='https://i.imgur.com/UOa1y7O.png' width='50' style='margin-right: 10px;'/>
-        <h1 style='margin: 0; font-size: 1.8rem;'>{t("Flowen: Debt Collection AI Dashboard", "Flowen: แพลตฟอร์มติดตามหนี้อัจฉริยะ")}</h1>
+        <h1 style='margin: 0; font-size: 1.8rem;'>Flowen: Debt Collection AI Dashboard</h1>
     </div>
-    """,
-    unsafe_allow_html=True
+    """, unsafe_allow_html=True
 )
 
 # Load data
