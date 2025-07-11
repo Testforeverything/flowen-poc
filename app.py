@@ -177,3 +177,4 @@ elif menu == "Behavioral Insights":
         title="Top Performing Contact Channels"
     )
     st.plotly_chart(fig_channel, use_container_width=True)
+    
