@@ -107,4 +107,4 @@ if page == "Risk Overview":
     st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
     st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
 
-# Optional: Add `elif` for other pages later (Journey Management, Recovery KPI, etc.)
+# Optional: Add `elif` for other pages later (Journey Management, Recovery KPI, etc.) 
