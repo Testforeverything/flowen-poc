@@ -149,7 +149,7 @@ elif menu == "Journey Management":
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     # --- Journey Type Performance ---
-    st.markdown("### 📊 Journey Type Performance")
+    st.markdown("###  Journey Type Performance")
     journey_perf = pd.DataFrame({
         "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Prompt", "Manual Call"],
         "Conversion Rate (%)": [31, 42, 38, 28],
@@ -158,7 +158,7 @@ elif menu == "Journey Management":
     st.dataframe(journey_perf)
 
     # --- Time in Journey Distribution ---
-    st.markdown("### 🕒 Time in Journey by Risk Level")
+    st.markdown("###  Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [2.5, 4.2, 6.7]
@@ -173,9 +173,9 @@ elif menu == "Journey Management":
     st.plotly_chart(fig_time, use_container_width=True)
 
     # --- Stuck Accounts Alert ---
-    st.markdown("### 🚥 Stuck Accounts Alert")
+    st.markdown("###  Stuck Accounts Alert")
     stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
-    st.warning(f"⚠️ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
+    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
     st.dataframe(
         stuck_accounts[[
             "account_id", "name", "dpd", "risk_level",
@@ -192,7 +192,7 @@ elif menu == "Journey Management":
     )
 
     # --- AI Journey Recommendation (Mock) ---
-    st.markdown("### 🤖 AI Journey Recommendation (Sample)")
+    st.markdown("###  AI Journey Recommendation (Sample)")
     rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
     rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
         "Low": "LINE Reminder A",
@@ -212,10 +212,10 @@ elif menu == "Journey Management":
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
-    st.title("📈 Recovery KPI Dashboard")
+    st.title(" Recovery KPI Dashboard")
 
     # --- KPI Summary ---
-    st.markdown("### 📊 Recovery Overview (Month-to-date)")
+    st.markdown("###  Recovery Overview (Month-to-date)")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Recovered", "฿12,850,000")
     col2.metric("Recovery Rate", "64.7%")
@@ -231,7 +231,7 @@ elif menu == "Recovery KPI":
     st.plotly_chart(fig_trend, use_container_width=True)
 
     # --- Channel Effectiveness ---
-    st.markdown("### 📞 Channel Effectiveness")
+    st.markdown("###  Channel Effectiveness")
     channel_perf = pd.DataFrame({
         "Channel": ["LINE Bot", "Voice Bot", "Phone Call", "Email"],
         "Success Rate (%)": [43, 38, 54, 22],
@@ -247,7 +247,7 @@ elif menu == "Recovery KPI":
     st.plotly_chart(fig_bar, use_container_width=True)
 
     # --- Collector Performance ---
-    st.markdown("### 🧍 Collector Leaderboard")
+    st.markdown("###  Collector Leaderboard")
     collector_data = pd.DataFrame({
         "Collector": ["Aon", "May", "Bee", "Tarn", "Jib"],
         "Recovered (฿)": [1450000, 1380000, 1250000, 1190000, 950000],
@@ -256,7 +256,7 @@ elif menu == "Recovery KPI":
     st.dataframe(collector_data)
 
     # --- Segment Recovery Overview ---
-    st.markdown("### 🧠 Recovery by Risk Level")
+    st.markdown("###  Recovery by Risk Level")
     risk_seg = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Recovery Rate (%)": [72, 63, 44]
@@ -271,7 +271,7 @@ elif menu == "Recovery KPI":
     st.plotly_chart(fig_seg, use_container_width=True)
 
     # --- Recovery Funnel ---
-    st.markdown("### 🔁 Recovery Conversion Funnel")
+    st.markdown("###  Recovery Conversion Funnel")
     funnel_data = pd.DataFrame({
         "Stage": ["Messaged", "Opened", "Responded", "Promised to Pay", "Paid"],
         "Count": [18000, 14400, 9100, 3400, 1850]
@@ -285,7 +285,7 @@ elif menu == "Recovery KPI":
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     # --- AI Journey Effectiveness Insight ---
-    st.markdown("### 🤖 AI Journey Effectiveness")
+    st.markdown("###  AI Journey Effectiveness")
     ai_journey = pd.DataFrame({
         "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Push", "Aggressive Call"],
         "Recovery Rate (%)": [28, 42, 38, 35],
@@ -293,7 +293,7 @@ elif menu == "Recovery KPI":
     })
     st.dataframe(ai_journey)
 
-    st.success("✅ Insight: LINE Reminder B has 42% recovery rate in Medium-Risk group. Consider promoting this journey.")
+    st.success(" Insight: LINE Reminder B has 42% recovery rate in Medium-Risk group. Consider promoting this journey.")
 
 
 # --- Behavioral Insights ---
