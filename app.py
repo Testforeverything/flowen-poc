@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -7,226 +8,174 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 
-# ─── PAGE CONFIG ───────────────────────────────────────────
+# ---- PAGE CONFIG & THEME ----
 st.set_page_config(page_title="Flowen Dashboard", layout="wide")
-
-# ─── CUSTOM CSS THEME ───────────────────────────────────────
 st.markdown("""
 <style>
-  /* Global background */
-  .main { background-color: #F7FAFC; }
-
-  /* Top bar */
-  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .top-bar img { height: 40px; }
-  .top-bar .lang { font-size: 1rem; }
-
-  /* Sidebar background */
+  .main { background-color: #F9FAFB; }
   [data-testid="stSidebar"] { background-color: #0A2342; }
-  [data-testid="stSidebar"] * { color: #FFF; }
-
-  /* Card style */
-  .card { background: #FFF; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-  /* Headings */
-  h2, h3, .card h4 { color: #0A2342; }
-
-  /* Buttons */
-  .stButton>button { background-color: #2CA8D2; color: #FFF; border-radius: 4px; }
+  [data-testid="stSidebar"] * { color: #FFF; font-size:16px; }
+  h1,h2,h3,h4 { color: #1B4965; }
+  div[data-testid="metric-container"] { background: #FFF; padding:15px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin-bottom:15px; }
+  [data-testid="stExpander"] { background: #F0F4F8; border:1px solid #DCE3EB; border-radius:8px; }
+  .stButton > button { background-color:#2CA8D2; color:#FFF; border-radius:8px; padding:8px 16px; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── BRAND COLORS ───────────────────────────────────────────
-BRAND = ["#2CA8D2", "#21B573", "#0A2342"]
+# ---- BRAND COLORS ----
+FLOWEN_COLORS = ["#1B4965", "#2CA8D2", "#21B573", "#90E0EF"]
 
-# ─── LOAD DATA ───────────────────────────────────────────────
+# ---- DATA LOADER ----
 @st.cache_data
 def load_data():
     return pd.read_csv("flowen_mock_data_1000.csv")
-
 df = load_data()
 
-# ─── TOP BAR: LOGO + TITLE + LANGUAGE SWITCH ───────────────
-col1, col2, col3 = st.columns([1, 8, 1])
-with col1:
-    st.image("https://i.imgur.com/UOa1y7O.png")
-with col2:
-    title = "Debt Collection AI" if True else ""  # placeholder
-    st.markdown(f"<h1 style='color:#0A2342'>Flowen: {title}</h1>", unsafe_allow_html=True)
-with col3:
-    lang = st.selectbox("", ["🇬🇧 EN", "🇹🇭 TH"], key="lang", label_visibility="collapsed")
+# ---- SIDEBAR: LOGO & NAV & FILTERS & EXPORT ----
+st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
 
-st.markdown("---", unsafe_allow_html=True)
+lang = st.sidebar.selectbox("🌐 Language / ภาษา", ["EN", "TH"], index=0)
+menu = st.sidebar.radio("📊 Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"] )
 
-# ─── SIDEBAR MENU & FILTERS & EXPORT ───────────────────────
-st.sidebar.header("📊 Navigation")
-menu = st.sidebar.radio("", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
-
+st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔎 Filters")
 regions = st.sidebar.multiselect("Region", df["region"].unique(), df["region"].unique())
 loans   = st.sidebar.multiselect("Loan Type", df["loan_type"].unique(), df["loan_type"].unique())
 min_dpd = st.sidebar.slider("Min Days Past Due", 0, int(df["dpd"].max()), 0)
 
-filtered = df[
-    df["region"].isin(regions) &
-    df["loan_type"].isin(loans) &
-    (df["dpd"] >= min_dpd)
-]
+filtered = df[ df["region"].isin(regions) & df["loan_type"].isin(loans) & (df["dpd"] >= min_dpd) ]
 
-def to_excel(data):
+# Export functions
+
+def to_excel(data: pd.DataFrame) -> bytes:
     buf = BytesIO()
     data.to_excel(buf, index=False, engine="openpyxl")
     return buf.getvalue()
 
-def to_pdf(data):
+
+def to_pdf(data: pd.DataFrame) -> bytes:
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
-    styles = getSampleStyleSheet()
-    elems = [Paragraph("Flowen Debtor Report", styles["Title"]), Spacer(1,12)]
+    style = getSampleStyleSheet()
+    elems = [Paragraph("Flowen Debtor Report", style["Title"]), Spacer(1,12)]
     table_data = [data.columns.tolist()] + data.values.tolist()
     tbl = Table(table_data, hAlign="LEFT")
     tbl.setStyle(TableStyle([
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor(BRAND[0])),
-        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
-        ("GRID",(0,0),(-1,-1),1,colors.grey),
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor(FLOWEN_COLORS[1])),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("GRID", (0,0), (-1,-1), 1, colors.grey),
     ]))
     elems.append(tbl)
     doc.build(elems)
     return buf.getvalue()
 
-st.sidebar.download_button("⬇️ Export Excel", to_excel(filtered),
-    file_name="flowen_report.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-st.sidebar.download_button("⬇️ Export PDF", to_pdf(filtered),
-    file_name="flowen_report.pdf", mime="application/pdf")
+st.sidebar.download_button("⬇️ Export Excel", to_excel(filtered), file_name="flowen_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+st.sidebar.download_button("⬇️ Export PDF", to_pdf(filtered), file_name="flowen_report.pdf", mime="application/pdf")
 
-# ─── REAL-TIME ALERT ────────────────────────────────────────
-late = df[df["dpd"] > 60].shape[0]
-if late:
-    st.warning(f"🔔 {late} accounts have exceeded 60 days past due!")
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔔 Notifications")
+st.sidebar.write("- New high-risk accounts flagged")
+st.sidebar.write("- AI model retrained")
 
-# ─── DEBTOR PROFILE VIEWER ──────────────────────────────────
+st.sidebar.markdown("---")
 st.sidebar.markdown("### 👤 Debtor Profile")
-sel = st.sidebar.selectbox("Select Debtor", filtered["name"].unique())
-debtor = df[df["name"] == sel].iloc[0]
+sel_name = st.sidebar.selectbox("Select Debtor", filtered["name"].unique())
+selected = df[df["name"] == sel_name].iloc[0]
 
-# ─── PAGE: RISK OVERVIEW ────────────────────────────────────
+# ---- MAIN HEADER ----
+st.markdown(f"<div style='display:flex; align-items:center; justify-content:space-between;'>
+    <h1>Flowen Dashboard</h1>
+    <div style='font-size:18px; color:#1B4965;'>Language: {lang}</div>
+</div><hr>", unsafe_allow_html=True)
+
+# ---- UTIL: CARD WRAPPER ----
+def card():
+    return st.container()
+
+# ---- PAGES ----
 if menu == "Risk Overview":
-    header = "Risk Overview" if lang=="🇬🇧 EN" else "ภาพรวมความเสี่ยง"
-    st.markdown(f"<h2>{header}</h2>", unsafe_allow_html=True)
+    with card():
+        st.subheader("Real-Time Status Panel")
+        c1,c2,c3,c4 = st.columns(4)
+        c1.metric("Accounts Contacted Today", "1,203")
+        c2.metric("Responses Received", "645")
+        c3.metric("Active Conversations", "53")
+        c4.metric("Paid Within 24h", "32%")
 
-    # Real-time status panel
-    with st.container():
-        st.markdown('<div class="card"><h4>Real-Time Status</h4>' +
-                    '<div style="display:flex;gap:1rem">' +
-                    '<div>📞 <b>1,203</b><br>Contacted Today</div>' +
-                    '<div>✉️ <b>645</b><br>Responses</div>' +
-                    '<div>💬 <b>53</b><br>Active Conv.</div>' +
-                    '<div>💰 <b>32%</b><br>Paid 24h</div>' +
-                    '</div></div>', unsafe_allow_html=True)
+    with card():
+        st.subheader("AI Suggestion Feed")
+        top5 = filtered.nlargest(5, "ai_risk_score")
+        st.table(top5[["account_id","name","risk_score","loan_type","contact_channel"]]
+                  .rename(columns=str.title))
 
-    # AI Suggestion Feed
-    with st.container():
-        st.markdown('<div class="card"><h4>AI Suggestion Feed</h4></div>', unsafe_allow_html=True)
-        with st.expander("Top 5 Accounts Likely to Pay in 48h"):
-            st.table(filtered.nlargest(5,"ai_risk_score")[["account_id","name","risk_score","loan_type","contact_channel"]]
-                     .rename(columns=str.title))
-
-    # Human vs AI
-    with st.container():
-        st.markdown('<div class="card"><h4>⚖️ Human vs AI Effectiveness</h4></div>', unsafe_allow_html=True)
-        st.table(pd.DataFrame({
-            "Method":["AI Flow","Manual Call","Email"],
-            "Success Rate (%)":[72,51,43],
-            "Avg Time to Pay":[2.5,4.2,5.1]
-        }))
-
-    # Debtor Profile
-    with st.container():
-        st.markdown('<div class="card"><h4>👤 Debtor Profile</h4></div>', unsafe_allow_html=True)
-        with st.expander(f"{sel} ({debtor['account_id']})"):
-            for k,v in debtor.items():
-                st.write(f"**{k.replace('_',' ').title()}:** {v}")
-
-    # Risk Distribution Pie
-    with st.container():
-        st.markdown('<div class="card"><h4>📊 Risk Distribution</h4></div>', unsafe_allow_html=True)
-        rd = filtered["risk_level"].value_counts().reset_index()
-        rd.columns = ["Level","Count"]
-        fig = px.pie(rd, names="Level", values="Count", hole=0.4,
-                     color_discrete_sequence=BRAND)
+    with card():
+        st.subheader("Risk Distribution")
+        dist = filtered["risk_level"].value_counts().reset_index()
+        dist.columns = ["Risk Level","Count"]
+        fig = px.pie(dist, names="Risk Level", values="Count", hole=0.4,
+                     color_discrete_sequence=FLOWEN_COLORS)
         st.plotly_chart(fig, use_container_width=True)
 
-# ─── PAGE: JOURNEY MANAGEMENT ───────────────────────────────
-elif menu == "Journey Management":
-    header = "Journey Management" if lang=="🇬🇧 EN" else "จัดการการเดินทาง"
-    st.markdown(f"<h2>{header}</h2>", unsafe_allow_html=True)
+    with card():
+        st.subheader("Debtor Profile View")
+        st.markdown(f"**Name:** {selected['name']}  \\**ID:** {selected['account_id']}")
+        st.markdown(f"**Risk Score:** {selected['risk_score']} | **DPD:** {selected['dpd']} days")
+        st.markdown(f"**Outstanding:** ฿{selected['total_debt']:,} | **Loan Type:** {selected['loan_type']}")
+        st.markdown(f"**Region:** {selected['region']} | **Channel:** {selected['contact_channel']}")
 
-    with st.container():
-        st.markdown('<div class="card"><h4>📊 Journey Funnel Overview</h4></div>', unsafe_allow_html=True)
+elif menu == "Journey Management":
+    with card():
+        st.subheader("Journey Funnel Overview")
         funnel = pd.DataFrame({
             "Stage":["Uncontacted","Contacted","Promise to Pay","Paid"],
             "Count":[8500,5200,2100,865]
         })
-        fig = px.funnel(funnel, x="Count", y="Stage", color_discrete_sequence=BRAND)
+        fig = px.funnel(funnel, x="Count", y="Stage", color_discrete_sequence=FLOWEN_COLORS)
         st.plotly_chart(fig, use_container_width=True)
 
-    with st.container():
-        st.markdown('<div class="card"><h4>📈 Journey Type Performance</h4></div>', unsafe_allow_html=True)
-        st.table(pd.DataFrame({
-            "Journey":["LINE A","LINE B","Voice","Manual"],
-            "Conv Rate (%)":[31,42,38,28],
-            "Avg Days":[4.2,3.5,4.0,6.1]
-        }))
+    with card():
+        st.subheader("Journey Type Performance")
+        jm = pd.DataFrame({"Journey":["LINE A","LINE B","Voice","Manual"],
+                           "ConvRate%": [31,42,38,28],
+                           "AvgDays":[4.2,3.5,4.0,6.1]})
+        st.dataframe(jm)
 
-# ─── PAGE: RECOVERY KPI ─────────────────────────────────────
 elif menu == "Recovery KPI":
-    header = "Recovery KPI" if lang=="🇬🇧 EN" else "ดัชนีการเก็บหนี้"
-    st.markdown(f"<h2>{header}</h2>", unsafe_allow_html=True)
-
-    with st.container():
-        st.markdown('<div class="card"><h4>💰 KPI Summary</h4></div>', unsafe_allow_html=True)
+    with card():
+        st.subheader("Recovery Overview (MTD)")
         m1,m2,m3,m4 = st.columns(4)
-        m1.metric("Total Recovered","฿12.85M")
+        m1.metric("Total Recovered","฿12.8M")
         m2.metric("Recovery Rate","65%")
-        m3.metric("Avg Time to Recovery","3.6d")
-        m4.metric("Collectors","12")
+        m3.metric("Avg Time to Recovery","3.6 days")
+        m4.metric("Active Collectors","12")
 
-    with st.container():
-        st.markdown('<div class="card"><h4>📈 Daily Recovery Trend</h4></div>', unsafe_allow_html=True)
-        trend = pd.DataFrame({
-            "Date":pd.date_range("2025-07-01",periods=7),
-            "Recovered":[1.0,1.2,1.3,1.1,1.5,1.6,1.7]
-        })
+    with card():
+        st.subheader("Daily Recovery Trend")
+        trend = pd.DataFrame({"Date":pd.date_range("2025-07-01",7),
+                              "Recovered":[1.0,1.2,1.3,1.1,1.5,1.6,1.7]})
         fig = px.line(trend, x="Date", y="Recovered", markers=True,
-                      color_discrete_sequence=[BRAND[0]])
+                      color_discrete_sequence=[FLOWEN_COLORS[1]])
         st.plotly_chart(fig, use_container_width=True)
 
-# ─── PAGE: BEHAVIORAL INSIGHTS ──────────────────────────────
-else:
-    header = "Behavioral Insights" if lang=="🇬🇧 EN" else "พฤติกรรมลูกหนี้"
-    st.markdown(f"<h2>{header}</h2>", unsafe_allow_html=True)
-
-    with st.container():
-        st.markdown('<div class="card"><h4>🎯 Response Behavior</h4></div>', unsafe_allow_html=True)
+elif menu == "Behavioral Insights":
+    with card():
+        st.subheader("Response Behavior")
         rb = filtered["response_behavior"].value_counts().reset_index()
         rb.columns=["Behavior","Count"]
         fig = px.pie(rb, names="Behavior", values="Count", hole=0.4,
-                     color_discrete_sequence=BRAND)
+                     color_discrete_sequence=FLOWEN_COLORS)
         st.plotly_chart(fig, use_container_width=True)
 
-    with st.container():
-        st.markdown('<div class="card"><h4>💸 Monthly Income Distribution</h4></div>', unsafe_allow_html=True)
+    with card():
+        st.subheader("Monthly Income Distribution")
         fig2 = px.histogram(filtered, x="monthly_income", nbins=30,
-                            color_discrete_sequence=[BRAND[1]])
+                            color_discrete_sequence=[FLOWEN_COLORS[2]])
         st.plotly_chart(fig2, use_container_width=True)
 
-    with st.container():
-        st.markdown('<div class="card"><h4>📡 Channel vs Behavior</h4></div>', unsafe_allow_html=True)
-        cb = filtered.groupby(["contact_channel","response_behavior"])\
-                     .size().reset_index(name="Count")
-        fig3 = px.bar(cb, x="contact_channel", y="Count",
-                      color="response_behavior", barmode="group",
-                      color_discrete_sequence=BRAND)
+    with card():
+        st.subheader("Channel vs Behavior")
+        cb = filtered.groupby(["contact_channel","response_behavior"]).size().reset_index(name="Count")
+        fig3 = px.bar(cb, x="contact_channel", y="Count", color="response_behavior",
+                      barmode="group", color_discrete_sequence=FLOWEN_COLORS)
         st.plotly_chart(fig3, use_container_width=True)
+```
