@@ -50,7 +50,7 @@ df = load_data()
 # ─── SIDEBAR ───────────────────────────────────────────
 st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=160)
 lang = st.sidebar.selectbox("🌐 Language", ["🇬🇧 EN", "🇹🇭 TH"])
-menu = st.sidebar.radio("📊 Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+menu = st.sidebar.radio("["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
 
 # ─── COLOR THEME ───────────────────────────────────────
 brand_colors = ["#2CA8D2", "#21B573", "#0A2342"]
@@ -78,39 +78,39 @@ if menu == "Risk Overview":
             use_container_width=True
         )
 
-    st.subheader("⚖️ Human vs AI Effectiveness")
+    st.subheader(" Human vs AI Effectiveness")
     st.dataframe(pd.DataFrame({
         "Method": ["AI Recommended Flow", "Manual Call", "Email Follow-up"],
         "Success Rate (%)": [72, 51, 43],
         "Avg Time to Payment (Days)": [2.5, 4.2, 5.1]
     }))
 
-    st.info("🧠 AI last retrained: 2 hours ago | Top new feature: Contact Channel | Next model update in: 22 hours")
+    st.info(" AI last retrained: 2 hours ago | Top new feature: Contact Channel | Next model update in: 22 hours")
 
-    st.subheader("📊 Behavior-Based Segmentation")
+    st.subheader(" Behavior-Based Segmentation")
     segment_data = df["response_behavior"].value_counts().reset_index()
     fig_segment = px.pie(segment_data, names="index", values="response_behavior", hole=0.4,
                          color_discrete_sequence=brand_colors)
     st.plotly_chart(fig_segment, use_container_width=True)
 
-    st.subheader("📌 Loan Type Breakdown")
+    st.subheader(" Loan Type Breakdown")
     loan_dist = df["loan_type"].value_counts().reset_index()
     fig_loan = px.pie(loan_dist, names="index", values="loan_type", hole=0.4,
                       color_discrete_sequence=brand_colors)
     st.plotly_chart(fig_loan, use_container_width=True)
 
-    st.subheader("📈 Avg DPD by Age Group")
+    st.subheader(" Avg DPD by Age Group")
     df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
     age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
     fig_age = px.bar(age_dpd, x="age_group", y="dpd", labels={"dpd": "Avg DPD"},
                      color_discrete_sequence=brand_colors)
     st.plotly_chart(fig_age, use_container_width=True)
 
-    st.subheader("📋 Debtor Summary (Click to View)")
+    st.subheader(" Debtor Summary (Click to View)")
     selected_name = st.selectbox("🔍 Select Debtor", df["name"].unique())
     selected_debtor = df[df["name"] == selected_name].iloc[0]
 
-    with st.expander(f"👤 Debtor Profile: {selected_name}"):
+    with st.expander(f" Debtor Profile: {selected_name}"):
         st.write(f"**Account ID:** {selected_debtor['account_id']}")
         st.write(f"**Risk Score:** {selected_debtor['risk_score']} | Risk Level: {selected_debtor['risk_level']}")
         st.write(f"**Outstanding:** ฿{selected_debtor['total_debt']:,} | DPD: {selected_debtor['dpd']} days")
@@ -123,7 +123,7 @@ elif menu == "Journey Management":
     title = "Journey Management" if lang == "🇬🇧 EN" else "จัดการการเดินทางลูกหนี้"
     st.title(f"🚀 {title}")
 
-    st.subheader("📊 Journey Funnel")
+    st.subheader(" Journey Funnel")
     funnel_data = pd.DataFrame({
         "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
         "Count": [8500, 5200, 2100, 865]
@@ -131,7 +131,7 @@ elif menu == "Journey Management":
     fig_funnel = px.funnel(funnel_data, x="Count", y="Stage", color_discrete_sequence=brand_colors)
     st.plotly_chart(fig_funnel, use_container_width=True)
 
-    st.subheader("📈 Journey Performance")
+    st.subheader(" Journey Performance")
     journey_perf = pd.DataFrame({
         "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Prompt", "Manual Call"],
         "Conversion Rate (%)": [31, 42, 38, 28],
@@ -142,7 +142,7 @@ elif menu == "Journey Management":
 # ─── PAGE: RECOVERY KPI ───────────────────────────────
 elif menu == "Recovery KPI":
     title = "Recovery KPI" if lang == "🇬🇧 EN" else "ดัชนีการเก็บหนี้"
-    st.title(f"💰 {title}")
+    st.title(f" {title}")
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Recovered", "฿12,850,000")
@@ -150,7 +150,7 @@ elif menu == "Recovery KPI":
     col3.metric("Avg. Time to Recovery", "3.6 days")
     col4.metric("Active Collectors", "12")
 
-    st.subheader("📈 Daily Recovery Trend")
+    st.subheader(" Daily Recovery Trend")
     trend_data = pd.DataFrame({
         "Date": pd.date_range("2025-07-01", periods=10, freq="D"),
         "Recovered": [1000000, 1250000, 1380000, 1220000, 1500000, 1600000, 1700000, 1450000, 1550000, 1650000]
@@ -161,19 +161,19 @@ elif menu == "Recovery KPI":
 # ─── PAGE: BEHAVIORAL INSIGHTS ────────────────────────
 elif menu == "Behavioral Insights":
     title = "Behavioral Insights" if lang == "🇬🇧 EN" else "พฤติกรรมลูกหนี้"
-    st.title(f"🧠 {title}")
+    st.title(f" {title}")
 
-    st.subheader("🎯 Response Behavior")
+    st.subheader(" Response Behavior")
     response_counts = df["response_behavior"].value_counts().reset_index()
     fig_response = px.pie(response_counts, names="index", values="response_behavior", hole=0.4,
                           color_discrete_sequence=brand_colors)
     st.plotly_chart(fig_response, use_container_width=True)
 
-    st.subheader("💸 Monthly Income Distribution")
+    st.subheader(" Monthly Income Distribution")
     fig_income = px.histogram(df, x="monthly_income", nbins=30, color_discrete_sequence=[brand_colors[1]])
     st.plotly_chart(fig_income, use_container_width=True)
 
-    st.subheader("📡 Channel vs Behavior")
+    st.subheader(" Channel vs Behavior")
     chan_beh = df.groupby(["contact_channel", "response_behavior"]).size().reset_index(name="Count")
     fig_chan = px.bar(chan_beh, x="contact_channel", y="Count", color="response_behavior",
                       barmode="group", color_discrete_sequence=brand_colors)
