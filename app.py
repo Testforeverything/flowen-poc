@@ -18,6 +18,7 @@ st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
 menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
 
 # --- Risk Overview ---
+
 elif menu == "Risk Overview":
     st.title("📊 Risk Overview")
 
