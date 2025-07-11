@@ -6,6 +6,22 @@ from PIL import Image
 # ─── Configuration ─────────────────────────────────────────────
 st.set_page_config(page_title="Flowen Dashboard", layout="wide")
 
+# ─── Logo Top Left ─────────────────────────
+st.markdown("""
+    <style>
+        .flowen-logo {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+    </style>
+    <div class="flowen-logo">
+        <img src="data:image/png;base64,{}" width="120"/>
+    </div>
+""".format(base64.b64encode(open("flowen_logo.png", "rb").read()).decode()), unsafe_allow_html=True)
+
+
 # ─── Custom Theme Styling ──────────────────────────────────────
 st.markdown("""
     <style>
