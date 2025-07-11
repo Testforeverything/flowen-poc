@@ -212,22 +212,89 @@ elif menu == "Journey Management":
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
-    st.subheader(" Recovery KPI Overview")
-    st.metric("Total Recovery Rate", "65%")
+    st.title("📈 Recovery KPI Dashboard")
 
-    channel_data = pd.DataFrame({
-        "Channel": ["LINE", "Phone", "Email"],
-        "Success": [60, 54, 47]
+    # --- KPI Summary ---
+    st.markdown("### 📊 Recovery Overview (Month-to-date)")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Recovered", "฿12,850,000")
+    col2.metric("Recovery Rate", "64.7%")
+    col3.metric("Avg. Time to Recovery", "3.6 days")
+    col4.metric("Active Collectors", "12")
+
+    # --- Recovery Trend Chart ---
+    trend_data = pd.DataFrame({
+        "Date": pd.date_range("2025-07-01", periods=10, freq="D"),
+        "Recovered": [1000000, 1250000, 1380000, 1220000, 1500000, 1600000, 1700000, 1450000, 1550000, 1650000]
     })
-    fig_bar = px.bar(channel_data, x="Channel", y="Success", text="Success", title="Channel Success Rate")
+    fig_trend = px.line(trend_data, x="Date", y="Recovered", markers=True, title="Daily Recovery Trend")
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+    # --- Channel Effectiveness ---
+    st.markdown("### 📞 Channel Effectiveness")
+    channel_perf = pd.DataFrame({
+        "Channel": ["LINE Bot", "Voice Bot", "Phone Call", "Email"],
+        "Success Rate (%)": [43, 38, 54, 22],
+        "Avg Recovery per Case": [850, 720, 1100, 460]
+    })
+    fig_bar = px.bar(
+        channel_perf,
+        x="Channel",
+        y="Success Rate (%)",
+        color="Channel",
+        title="Channel Success Rate"
+    )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    daily = pd.DataFrame({
-        "Day": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        "Recovery": [100, 150, 200, 230, 250, 280, 300]
+    # --- Collector Performance ---
+    st.markdown("### 🧍 Collector Leaderboard")
+    collector_data = pd.DataFrame({
+        "Collector": ["Aon", "May", "Bee", "Tarn", "Jib"],
+        "Recovered (฿)": [1450000, 1380000, 1250000, 1190000, 950000],
+        "Cases Closed": [95, 87, 81, 74, 66]
     })
-    fig_trend = px.line(daily, x="Day", y="Recovery", markers=True, title="Daily Recovery Trend")
-    st.plotly_chart(fig_trend, use_container_width=True)
+    st.dataframe(collector_data)
+
+    # --- Segment Recovery Overview ---
+    st.markdown("### 🧠 Recovery by Risk Level")
+    risk_seg = pd.DataFrame({
+        "Risk Level": ["Low", "Medium", "High"],
+        "Recovery Rate (%)": [72, 63, 44]
+    })
+    fig_seg = px.bar(
+        risk_seg,
+        x="Risk Level",
+        y="Recovery Rate (%)",
+        color="Risk Level",
+        title="Recovery Rate by Risk Group"
+    )
+    st.plotly_chart(fig_seg, use_container_width=True)
+
+    # --- Recovery Funnel ---
+    st.markdown("### 🔁 Recovery Conversion Funnel")
+    funnel_data = pd.DataFrame({
+        "Stage": ["Messaged", "Opened", "Responded", "Promised to Pay", "Paid"],
+        "Count": [18000, 14400, 9100, 3400, 1850]
+    })
+    fig_funnel = px.funnel(
+        funnel_data,
+        x="Count",
+        y="Stage",
+        title="End-to-End Recovery Funnel"
+    )
+    st.plotly_chart(fig_funnel, use_container_width=True)
+
+    # --- AI Journey Effectiveness Insight ---
+    st.markdown("### 🤖 AI Journey Effectiveness")
+    ai_journey = pd.DataFrame({
+        "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Push", "Aggressive Call"],
+        "Recovery Rate (%)": [28, 42, 38, 35],
+        "Best Segment": ["Low Risk", "Medium Risk", "High Risk", "Ignored Group"]
+    })
+    st.dataframe(ai_journey)
+
+    st.success("✅ Insight: LINE Reminder B has 42% recovery rate in Medium-Risk group. Consider promoting this journey.")
+
 
 # --- Behavioral Insights ---
 elif menu == "Behavioral Insights":
