@@ -6,6 +6,17 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide")
 st.title("Flowen: Debt Collection AI Dashboard")
 
+# ใส่โลโก้ด้านบน (Top‑Left)
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; margin-bottom: 1rem;'>
+        <img src='https://i.imgur.com/UOa1y7O.png' width='50' style='margin-right: 10px;'/>
+        <h1 style='margin: 0; font-size: 1.8rem;'>{t("Flowen: Debt Collection AI Dashboard", "Flowen: แพลตฟอร์มติดตามหนี้อัจฉริยะ")}</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 # Load data
 @st.cache_data
 def load_data():
