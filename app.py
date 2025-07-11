@@ -19,7 +19,7 @@ menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "R
 
 # --- Risk Overview ---
 
-elif menu == "Risk Overview":
+if menu == "Risk Overview":
     st.title("📊 Risk Overview")
 
     # --- Real-Time Status Panel ---
