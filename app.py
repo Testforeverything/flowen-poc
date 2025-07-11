@@ -298,64 +298,95 @@ elif menu == "Recovery KPI":
 
 # --- Behavioral Insights ---
 elif menu == "Behavioral Insights":
-    st.subheader("👥 Behavioral Insights")
+    st.title("👥 Behavioral Insights Dashboard")
 
-    # 1. Response Behavior (Pie Chart)
-    st.markdown("###  Response Behavior")
-    response_counts = df["response_behavior"].value_counts()
+    # --- 1. Response Behavior ---
+    st.markdown("### 📨 Response Behavior")
+    response_counts = df["response_behavior"].value_counts().reset_index()
+    response_counts.columns = ["Behavior", "Count"]
     fig_response = px.pie(
-        names=response_counts.index,
-        values=response_counts.values,
-        title="Customer Response Behavior",
-        hole=0.4
+        response_counts,
+        names="Behavior",
+        values="Count",
+        hole=0.4,
+        title="Customer Response Breakdown"
     )
     st.plotly_chart(fig_response, use_container_width=True)
 
-    # 2. Repayment Frequency (Bar Chart)
-    st.markdown("###  Repayment Frequency")
-    repay_freq = df["payment_frequency"].value_counts().reset_index()
-    repay_freq.columns = ["Frequency", "Count"]
-    fig_freq = px.bar(
-        repay_freq,
-        x="Frequency",
-        y="Count",
-        color="Frequency",
-        title="Repayment Frequency Distribution"
+    # --- 2. Repayment Behavior ---
+    st.markdown("### 💸 Repayment Timing")
+    repay_delay = pd.DataFrame({
+        "Delay (Days)": ["0–1", "2–3", "4–7", "8–14", "15+"],
+        "Paid Count": [350, 420, 300, 180, 90]
+    })
+    fig_repay = px.bar(
+        repay_delay,
+        x="Delay (Days)",
+        y="Paid Count",
+        title="Repayment after Reminder Timing"
     )
-    st.plotly_chart(fig_freq, use_container_width=True)
+    st.plotly_chart(fig_repay, use_container_width=True)
 
-    # 3. Avoidance Pattern by Region (Bar Chart)
-    st.markdown("###  Avoidance Pattern by Region")
-    avoid_pattern = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
+    # --- 3. Avoidance Pattern ---
+    st.markdown("### 🚫 Avoidance Pattern")
+    avoid = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
     fig_avoid = px.bar(
-        avoid_pattern,
+        avoid,
         x="region",
         y="Ignored Count",
         color="region",
-        title="Avoidance Pattern by Region"
+        title="Avoidance by Region"
     )
     st.plotly_chart(fig_avoid, use_container_width=True)
 
-    # 4. Cash Flow Pattern (Histogram)
-    st.markdown("###  Cash Flow Pattern (Monthly Income)")
-    fig_income = px.histogram(
+    # --- 4. Cash Flow Insight ---
+    st.markdown("### 💵 Cash Flow Pattern")
+    fig_cash = px.histogram(
         df,
         x="monthly_income",
         nbins=30,
-        title="Distribution of Monthly Income"
+        title="Monthly Income Distribution"
     )
-    st.plotly_chart(fig_income, use_container_width=True)
+    st.plotly_chart(fig_cash, use_container_width=True)
 
-    # 5. Personalization Feedback – Channel Effectiveness (Pie Chart)
-    st.markdown("###  Personalization Feedback – Channel Effectiveness")
-    channel_perf = df["contact_channel"].value_counts().reset_index()
-    channel_perf.columns = ["Channel", "Count"]
-    fig_channel = px.pie(
-        channel_perf,
-        names="Channel",
-        values="Count",
-        hole=0.4,
-        title="Top Performing Contact Channels"
+    # --- 5. Channel Suitability by Behavior ---
+    st.markdown("### 📱 Channel vs Behavior")
+    chan_beh = df.groupby(["contact_channel", "response_behavior"]).size().reset_index(name="Count")
+    fig_chan = px.bar(
+        chan_beh,
+        x="contact_channel",
+        y="Count",
+        color="response_behavior",
+        barmode="group",
+        title="Contact Channel Performance by Behavior"
     )
-    st.plotly_chart(fig_channel, use_container_width=True)
-    
+    st.plotly_chart(fig_chan, use_container_width=True)
+
+    # --- 6. AI Insight Panel (Mock NLP Tags) ---
+    st.markdown("### 🤖 AI Insight Panel – NLP Behavior Tags")
+    st.info("AI analyzes conversation logs and assigns behavioral tags for smarter journey orchestration.")
+
+    ai_tags = pd.DataFrame({
+        "Sample Message": [
+            "ขอเลื่อน 3 วัน",
+            "ตอนนี้ไม่มีเงิน",
+            "ไม่ใช่หนี้ผม",
+            "จะจ่ายพรุ่งนี้",
+            "ไม่ตอบกลับ"
+        ],
+        "AI Tag": [
+            "Willing",
+            "Cashflow_Issue",
+            "Dispute",
+            "Pay_Intent",
+            "Silent"
+        ],
+        "Recommended Action": [
+            "Remind in 2 days",
+            "Pause & retry next payday",
+            "Send dispute form",
+            "Follow-up in 24h",
+            "Escalate to voice"
+        ]
+    })
+    st.dataframe(ai_tags)
