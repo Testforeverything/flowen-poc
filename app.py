@@ -22,10 +22,7 @@ with kpi1:
 with kpi2:
     st.metric("Avg. Risk Score", round(df['ai_risk_score'].mean(), 2))
 with kpi3:
-    if "status" in df.columns:
-        escalated_count = df[df['status'] == 'Escalate'].shape[0]
-    else:
-        escalated_count = "N/A"
+    escalated_count = df[df['status'] == 'Escalate'].shape[0] if "status" in df.columns else "N/A"
     st.metric("Escalated", escalated_count)
 
 st.markdown("---")
@@ -42,8 +39,9 @@ with chart1:
 with chart2:
     if "risk_level" in df.columns:
         donut = df['risk_level'].value_counts().reset_index()
+        donut.columns = ['risk_level', 'count']
         fig2 = px.pie(
-            donut, names='index', values='risk_level', hole=0.4,
+            donut, names='risk_level', values='count', hole=0.4,
             title="Risk Level Breakdown" if lang == "🇬🇧 EN" else "สัดส่วนระดับความเสี่ยง"
         )
         st.plotly_chart(fig2, use_container_width=True)
