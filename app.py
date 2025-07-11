@@ -20,7 +20,7 @@ menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "R
 # --- Risk Overview ---
 
 if menu == "Risk Overview":
-    st.title("📊 Risk Overview")
+    st.title(" Risk Overview")
 
     # --- Real-Time Status Panel ---
     st.markdown("###  Real-Time Status Panel")
@@ -137,10 +137,10 @@ if menu == "Risk Overview":
 
 # --- Journey Management ---
 elif menu == "Journey Management":
-    st.title("📦 Journey Management Dashboard")
+    st.title(" Journey Management Dashboard")
 
     # --- Journey Funnel Overview ---
-    st.markdown("### 🔁 Journey Funnel Overview")
+    st.markdown("###  Journey Funnel Overview")
     funnel_data = pd.DataFrame({
         "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
         "Count": [8500, 5200, 2100, 865]
@@ -298,10 +298,10 @@ elif menu == "Recovery KPI":
 
 # --- Behavioral Insights ---
 elif menu == "Behavioral Insights":
-    st.title("👥 Behavioral Insights Dashboard")
+    st.title(" Behavioral Insights Dashboard")
 
     # --- 1. Response Behavior ---
-    st.markdown("### 📨 Response Behavior")
+    st.markdown("###  Response Behavior")
     response_counts = df["response_behavior"].value_counts().reset_index()
     response_counts.columns = ["Behavior", "Count"]
     fig_response = px.pie(
@@ -314,7 +314,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_response, use_container_width=True)
 
     # --- 2. Repayment Behavior ---
-    st.markdown("### 💸 Repayment Timing")
+    st.markdown("###  Repayment Timing")
     repay_delay = pd.DataFrame({
         "Delay (Days)": ["0–1", "2–3", "4–7", "8–14", "15+"],
         "Paid Count": [350, 420, 300, 180, 90]
@@ -328,7 +328,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_repay, use_container_width=True)
 
     # --- 3. Avoidance Pattern ---
-    st.markdown("### 🚫 Avoidance Pattern")
+    st.markdown("###  Avoidance Pattern")
     avoid = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
     fig_avoid = px.bar(
         avoid,
@@ -340,7 +340,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_avoid, use_container_width=True)
 
     # --- 4. Cash Flow Insight ---
-    st.markdown("### 💵 Cash Flow Pattern")
+    st.markdown("###  Cash Flow Pattern")
     fig_cash = px.histogram(
         df,
         x="monthly_income",
@@ -350,7 +350,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_cash, use_container_width=True)
 
     # --- 5. Channel Suitability by Behavior ---
-    st.markdown("### 📱 Channel vs Behavior")
+    st.markdown("###  Channel vs Behavior")
     chan_beh = df.groupby(["contact_channel", "response_behavior"]).size().reset_index(name="Count")
     fig_chan = px.bar(
         chan_beh,
@@ -363,7 +363,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_chan, use_container_width=True)
 
     # --- 6. AI Insight Panel (Mock NLP Tags) ---
-    st.markdown("### 🤖 AI Insight Panel – NLP Behavior Tags")
+    st.markdown("###  AI Insight Panel – NLP Behavior Tags")
     st.info("AI analyzes conversation logs and assigns behavioral tags for smarter journey orchestration.")
 
     ai_tags = pd.DataFrame({
