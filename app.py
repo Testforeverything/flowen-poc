@@ -1,6 +1,10 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
+
+try:
+    import streamlit as st
+except ModuleNotFoundError:
+    raise ImportError("This app requires Streamlit to run. Please install it using 'pip install streamlit' before executing.")
 
 st.set_page_config(page_title="Flowen Dashboard", layout="wide")
 
@@ -11,8 +15,8 @@ df = pd.read_csv("flowen_mock_data_1000.csv")
 st.markdown("""
     <style>
         .main {
-            background: linear-gradient(135deg, #f43f5e, #a855f7);
-            color: white !important;
+            background: linear-gradient(135deg, #00b894, #0984e3);
+            color: #ffffff !important;
         }
         h2, .stMetric label, .stMarkdown, .stDataFrame, .css-1v0mbdj {
             color: white !important;
@@ -20,13 +24,24 @@ st.markdown("""
         .st-emotion-cache-1v0mbdj {
             color: white !important;
         }
-        .stMetric {background-color: rgba(255,255,255,0.05); padding: 1rem; border-radius: 1rem;}
+        .stMetric {
+            background-color: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 1rem;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# ----- Language Toggle ----- #
-col1, col2 = st.columns([0.05, 0.95])
-with col1:
+# ----- Logo and Language Toggle ----- #
+col_logo, col_lang = st.columns([0.1, 0.9])
+with col_logo:
+    st.image("Flowen_Logo_Transparent.png", width=100)
+with col_lang:
     lang = st.selectbox("", ["🇬🇧 EN", "🇹🇭 TH"])
 
 # ----- Title ----- #
