@@ -9,7 +9,7 @@ import base64
 st.set_page_config(page_title="Flowen Dashboard", layout="wide")
 
 # ─── Load Flowen Logo from base64 ─────────────────────────────────────────────
-logo_base64 = """<PASTE_BASE64_LOGO_HERE>"""
+logo_base64 = """<Flowen_logo>"""
 
 html_top = """
 <div style="display: flex; justify-content: space-between; align-items: center;">
