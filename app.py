@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
-st.title("🧠 Flowen: Debt Collection AI Dashboard")
+st.title("Flowen: Debt Collection AI Dashboard")
 
 # Load data
 @st.cache_data
@@ -23,15 +23,15 @@ if menu == "Risk Overview":
     st.title("📊 Risk Overview")
 
     # --- Real-Time Status Panel ---
-    st.markdown("### 🟢 Real-Time Status Panel")
+    st.markdown("###  Real-Time Status Panel")
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("📍 Accounts Contacted Today", "1,203")
-    col2.metric("📩 Responses Received", "645")
-    col3.metric("💬 Active Conversations", "53")
-    col4.metric("✅ Paid Within 24h", "32%")
+    col1.metric(" Accounts Contacted Today", "1,203")
+    col2.metric(" Responses Received", "645")
+    col3.metric(" Active Conversations", "53")
+    col4.metric(" Paid Within 24h", "32%")
 
     # --- AI Suggestion Feed ---
-    st.markdown("### 🤖 AI Suggestion Feed")
+    st.markdown("###  AI Suggestion Feed")
     with st.expander("Top 5 Accounts Likely to Pay in 48h"):
         st.table(
             df.sort_values("ai_risk_score", ascending=False)
@@ -69,7 +69,7 @@ if menu == "Risk Overview":
     st.dataframe(effect_data)
 
     # --- AI Self-Learning Indicator ---
-    st.markdown("### 🔁 AI Self-Learning System")
+    st.markdown("###  AI Self-Learning System")
     st.info(
         "AI last retrained: **2 hours ago**  \n"
         "Top new feature: **Contact Channel**  \n"
@@ -77,14 +77,14 @@ if menu == "Risk Overview":
     )
 
     # --- Debtor Segment Overview ---
-    st.markdown("### 👥 Debtor Segment Overview")
+    st.markdown("###  Debtor Segment Overview")
     segment_data = df["response_behavior"].value_counts().reset_index()
     segment_data.columns = ["Segment", "Count"]
     fig_segment = px.pie(segment_data, names="Segment", values="Count", hole=0.4, title="Behavior-Based Segmentation")
     st.plotly_chart(fig_segment, use_container_width=True)
 
     # --- Loan Type Distribution ---
-    st.markdown("### 🏦 Loan Type Distribution")
+    st.markdown("###  Loan Type Distribution")
     loan_dist = df["loan_type"].value_counts().reset_index()
     loan_dist.columns = ["Loan Type", "Count"]
     fig_loan = px.pie(
@@ -97,7 +97,7 @@ if menu == "Risk Overview":
     st.plotly_chart(fig_loan, use_container_width=True)
 
     # --- Payment Behavior by Age Group ---
-    st.markdown("### 👤 Payment Delay by Age Group")
+    st.markdown("###  Payment Delay by Age Group")
     df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
     age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
     fig_age = px.bar(
@@ -110,7 +110,7 @@ if menu == "Risk Overview":
     st.plotly_chart(fig_age, use_container_width=True)
 
     # --- Debtor Summary Table ---
-    st.markdown("### 📋 Debtor Summary")
+    st.markdown("###  Debtor Summary")
     st.dataframe(df[[
         "account_id", "name", "risk_score", "total_debt", "dpd",
         "loan_type", "region", "risk_level"
@@ -126,7 +126,7 @@ if menu == "Risk Overview":
     }), use_container_width=True)
 
     # --- Debtor Profile Viewer ---
-    st.markdown("### 🔍 Debtor Profile Viewer")
+    st.markdown("###  Debtor Profile Viewer")
     selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
     debtor = df[df["account_id"] == selected_account].iloc[0]
     st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
@@ -137,7 +137,7 @@ if menu == "Risk Overview":
 
 # --- Journey Management ---
 elif menu == "Journey Management":
-    st.subheader("📦 Journey Funnel")
+    st.subheader(" Journey Funnel")
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Customers", "21,500")
     col2.metric("Engagement Rate", "70%")
@@ -152,7 +152,7 @@ elif menu == "Journey Management":
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
-    st.subheader("📈 Recovery KPI Overview")
+    st.subheader(" Recovery KPI Overview")
     st.metric("Total Recovery Rate", "65%")
 
     channel_data = pd.DataFrame({
@@ -174,7 +174,7 @@ elif menu == "Behavioral Insights":
     st.subheader("👥 Behavioral Insights")
 
     # 1. Response Behavior (Pie Chart)
-    st.markdown("### 📨 Response Behavior")
+    st.markdown("###  Response Behavior")
     response_counts = df["response_behavior"].value_counts()
     fig_response = px.pie(
         names=response_counts.index,
@@ -185,7 +185,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_response, use_container_width=True)
 
     # 2. Repayment Frequency (Bar Chart)
-    st.markdown("### 💸 Repayment Frequency")
+    st.markdown("###  Repayment Frequency")
     repay_freq = df["payment_frequency"].value_counts().reset_index()
     repay_freq.columns = ["Frequency", "Count"]
     fig_freq = px.bar(
@@ -198,7 +198,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_freq, use_container_width=True)
 
     # 3. Avoidance Pattern by Region (Bar Chart)
-    st.markdown("### 🚫 Avoidance Pattern by Region")
+    st.markdown("###  Avoidance Pattern by Region")
     avoid_pattern = df[df["response_behavior"] == "Ignored"].groupby("region").size().reset_index(name="Ignored Count")
     fig_avoid = px.bar(
         avoid_pattern,
@@ -210,7 +210,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_avoid, use_container_width=True)
 
     # 4. Cash Flow Pattern (Histogram)
-    st.markdown("### 💵 Cash Flow Pattern (Monthly Income)")
+    st.markdown("###  Cash Flow Pattern (Monthly Income)")
     fig_income = px.histogram(
         df,
         x="monthly_income",
@@ -220,7 +220,7 @@ elif menu == "Behavioral Insights":
     st.plotly_chart(fig_income, use_container_width=True)
 
     # 5. Personalization Feedback – Channel Effectiveness (Pie Chart)
-    st.markdown("### 📢 Personalization Feedback – Channel Effectiveness")
+    st.markdown("###  Personalization Feedback – Channel Effectiveness")
     channel_perf = df["contact_channel"].value_counts().reset_index()
     channel_perf.columns = ["Channel", "Count"]
     fig_channel = px.pie(
