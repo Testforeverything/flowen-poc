@@ -18,40 +18,100 @@ st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
 menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
 
 # --- Risk Overview ---
-if menu == "Risk Overview":
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Outstanding", "฿{:,.0f}".format(df["total_debt"].sum()))
-    with col2:
-        st.metric("Recovery Rate", "65%")
-    with col3:
-        st.metric("Delinquent Accounts", f"{df.shape[0]:,}")
+elif menu == "Risk Overview":
+    st.title("📊 Risk Overview")
 
-    # Charts
-    risk_dist = df["risk_level"].value_counts()
-    fig_pie = px.pie(
-        names=risk_dist.index,
-        values=risk_dist.values,
-        hole=0.4,
-        title="Risk Distribution"
+    # --- Real-Time Status Panel ---
+    st.markdown("### 🟢 Real-Time Status Panel")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("📍 Accounts Contacted Today", "1,203")
+    col2.metric("📩 Responses Received", "645")
+    col3.metric("💬 Active Conversations", "53")
+    col4.metric("✅ Paid Within 24h", "32%")
+
+    # --- AI Suggestion Feed ---
+    st.markdown("### 🤖 AI Suggestion Feed")
+    with st.expander("Top 5 Accounts Likely to Pay in 48h"):
+        st.table(
+            df.sort_values("ai_risk_score", ascending=False)
+              .head(5)[["account_id", "name", "risk_score", "loan_type", "contact_channel"]]
+              .rename(columns={
+                  "account_id": "Account ID",
+                  "name": "Name",
+                  "risk_score": "Risk Score",
+                  "loan_type": "Loan Type",
+                  "contact_channel": "Contact Channel"
+              })
+        )
+
+    with st.expander("Accounts Ignored All Contact for 7+ Days"):
+        inactive = df[df["last_payment_days_ago"] > 30].sort_values("risk_score", ascending=False)
+        st.dataframe(
+            inactive[["account_id", "name", "risk_score", "last_payment_days_ago", "region"]]
+            .rename(columns={
+                "account_id": "Account ID",
+                "name": "Name",
+                "risk_score": "Risk Score",
+                "last_payment_days_ago": "Last Payment (Days Ago)",
+                "region": "Region"
+            }).head(5),
+            use_container_width=True
+        )
+
+    # --- Human vs AI Effectiveness Panel ---
+    st.markdown("### ⚖️ Human vs AI Effectiveness")
+    effect_data = pd.DataFrame({
+        "Method": ["AI Recommended Flow", "Manual Call", "Email Follow-up"],
+        "Success Rate (%)": [72, 51, 43],
+        "Avg Time to Payment (Days)": [2.5, 4.2, 5.1]
+    })
+    st.dataframe(effect_data)
+
+    # --- AI Self-Learning Indicator ---
+    st.markdown("### 🔁 AI Self-Learning System")
+    st.info(
+        "AI last retrained: **2 hours ago**  \n"
+        "Top new feature: **Contact Channel**  \n"
+        "Next model update in: **22 hours**"
     )
 
-    trend_data = pd.DataFrame({
-        "Month": ["May", "Jun", "Jul", "Aug", "Sep", "Oct"],
-        "Recovered": [200000, 250000, 300000, 350000, 380000, 410000]
-    })
-    fig_line = px.line(trend_data, x="Month", y="Recovered", title="Recovery Trend")
+    # --- Debtor Segment Overview ---
+    st.markdown("### 👥 Debtor Segment Overview")
+    segment_data = df["response_behavior"].value_counts().reset_index()
+    segment_data.columns = ["Segment", "Count"]
+    fig_segment = px.pie(segment_data, names="Segment", values="Count", hole=0.4, title="Behavior-Based Segmentation")
+    st.plotly_chart(fig_segment, use_container_width=True)
 
-    col4, col5 = st.columns([2,1])
-    with col4:
-        st.plotly_chart(fig_line, use_container_width=True)
-    with col5:
-        st.plotly_chart(fig_pie, use_container_width=True)
+    # --- Loan Type Distribution ---
+    st.markdown("### 🏦 Loan Type Distribution")
+    loan_dist = df["loan_type"].value_counts().reset_index()
+    loan_dist.columns = ["Loan Type", "Count"]
+    fig_loan = px.pie(
+        loan_dist,
+        names="Loan Type",
+        values="Count",
+        title="Loan Type Breakdown",
+        hole=0.4
+    )
+    st.plotly_chart(fig_loan, use_container_width=True)
 
-    # Table
-    st.subheader("📋 Debtor Summary")
+    # --- Payment Behavior by Age Group ---
+    st.markdown("### 👤 Payment Delay by Age Group")
+    df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
+    age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
+    fig_age = px.bar(
+        age_dpd,
+        x="age_group",
+        y="dpd",
+        title="Average Days Past Due by Age Group",
+        labels={"dpd": "Avg DPD", "age_group": "Age Group"}
+    )
+    st.plotly_chart(fig_age, use_container_width=True)
+
+    # --- Debtor Summary Table ---
+    st.markdown("### 📋 Debtor Summary")
     st.dataframe(df[[
-        "account_id", "name", "risk_score", "total_debt", "dpd", 
+        "account_id", "name", "risk_score", "total_debt", "dpd",
         "loan_type", "region", "risk_level"
     ]].rename(columns={
         "account_id": "Account ID",
@@ -64,22 +124,15 @@ if menu == "Risk Overview":
         "risk_level": "Risk Level"
     }), use_container_width=True)
 
-    # Debtor Profile
-    st.subheader("🔍 Debtor Profile Viewer")
+    # --- Debtor Profile Viewer ---
+    st.markdown("### 🔍 Debtor Profile Viewer")
     selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
     debtor = df[df["account_id"] == selected_account].iloc[0]
-    st.markdown(f"### {debtor['name']} (Account: {debtor['account_id']})")
-    st.write(f"**Risk Score:** {debtor['risk_score']} / **Risk Level:** {debtor['risk_level']}")
-    st.write(f"**Outstanding:** ฿{debtor['total_debt']:,} | **Days Past Due:** {debtor['dpd']} days")
-    st.write(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
-    st.write(f"**Contact Channel:** {debtor['contact_channel']}")
-
-    # Feature Importance (mock)
-    feature_names = ['dpd', 'last_payment_days_ago', 'monthly_income', 'income_level', 'loan_type']
-    importances = [0.28, 0.23, 0.20, 0.17, 0.12]
-    fig_imp = go.Figure(go.Bar(x=importances[::-1], y=feature_names[::-1], orientation='h'))
-    fig_imp.update_layout(title="Top Factors Contributing to AI Risk Score")
-    st.plotly_chart(fig_imp, use_container_width=True)
+    st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
+    st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
+    st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
+    st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
+    st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
 
 # --- Journey Management ---
 elif menu == "Journey Management":
