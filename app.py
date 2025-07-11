@@ -1,127 +1,154 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import base64
 
-# --- Page Setup ---
+# ─── PAGE SETUP ───────────────────────────────────────
 st.set_page_config(page_title="Flowen: Risk Overview", layout="wide")
 
-# --- Custom CSS for Card Layout ---
+# ─── CUSTOM CSS ───────────────────────────────────────
 st.markdown("""
 <style>
-.card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid #E0E0E0;
-    margin-bottom: 20px;
-}
-[data-testid="metric-container"] {
-    background-color: white;
-    padding: 10px;
-    border: 1px solid #E0E0E0;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    margin: 5px;
-}
+    .card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #E0E0E0;
+        margin-bottom: 20px;
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #0A2342;
+        margin-bottom: 12px;
+    }
+    [data-testid="metric-container"] {
+        background-color: white;
+        border: 1px solid #E0E0E0;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Load Logo ---
-def get_base64_logo(path):
-    with open(path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-logo_base64 = get_base64_logo("flowen_logo.png")
-
-# --- Sidebar ---
-st.sidebar.markdown(f"""
-    <div style="text-align: center;">
-        <img src="data:image/png;base64,{logo_base64}" width="130"/>
-    </div>
-""", unsafe_allow_html=True)
-
-language = st.sidebar.radio(" Language", ["🇬🇧 English", "🇹🇭 ภาษาไทย"])
-menu = st.sidebar.radio(" Menu", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
-
-# --- Load Data ---
+# ─── LOAD DATA ────────────────────────────────────────
 @st.cache_data
 def load_data():
     return pd.read_csv("flowen_mock_data_1000.csv")
 
 df = load_data()
 
-# --- Risk Overview Page ---
-if menu == "Risk Overview":
-    st.title("Risk Overview")
+# ─── LANGUAGE DROPDOWN (TOP RIGHT) ────────────────────
+top_left, top_spacer, top_right = st.columns([6, 5, 1.2])
+with top_right:
+    language = st.selectbox(" ", ["🇬🇧 English", "🇹🇭 ภาษาไทย"], label_visibility="collapsed")
 
-    # --- Metrics Cards ---
+# ─── LOCALIZED TEXT ───────────────────────────────────
+TEXT = {
+    "title": {
+        "🇬🇧 English": "📊 Flowen — Risk Overview",
+        "🇹🇭 ภาษาไทย": "📊 ภาพรวมความเสี่ยงของลูกหนี้"
+    },
+    "metrics": {
+        "outstanding": {"🇬🇧 English": "Total Outstanding", "🇹🇭 ภาษาไทย": "ยอดค้างชำระรวม"},
+        "recovery": {"🇬🇧 English": "Recovery Rate", "🇹🇭 ภาษาไทย": "อัตราการเก็บเงินสำเร็จ"},
+        "journey": {"🇬🇧 English": "Journey Management", "🇹🇭 ภาษาไทย": "การจัดการทวงหนี้"},
+    },
+    "recovery_trend": {"🇬🇧 English": "Recovery Trend", "🇹🇭 ภาษาไทย": "แนวโน้มการชำระเงิน"},
+    "debtor_summary": {"🇬🇧 English": "Debtor Summary", "🇹🇭 ภาษาไทย": "สรุปลูกหนี้"},
+    "total_recovery_rate": {"🇬🇧 English": "Total Recovery Rate", "🇹🇭 ภาษาไทย": "อัตราการเก็บรวม"},
+    "risk_distribution": {"🇬🇧 English": "Risk Distribution", "🇹🇭 ภาษาไทย": "การกระจายความเสี่ยง"},
+    "agent_performance": {"🇬🇧 English": "Agent Performance", "🇹🇭 ภาษาไทย": "ผลการทำงานของเจ้าหน้าที่"},
+    "channel_accuracy": {"🇬🇧 English": "Channel Accuracy", "🇹🇭 ภาษาไทย": "ความแม่นยำตามช่องทาง"},
+    "loan_type": {"🇬🇧 English": "Loan Type Distribution", "🇹🇭 ภาษาไทย": "ประเภทสินเชื่อ"},
+    "reasons": {"🇬🇧 English": "Payment Reason Breakdown", "🇹🇭 ภาษาไทย": "สาเหตุที่ลูกหนี้ไม่จ่าย"}
+}
+
+# ─── TITLE ────────────────────────────────────────────
+st.title(TEXT["title"][language])
+
+# ─── LAYOUT ───────────────────────────────────────────
+col_main, col_right = st.columns([2.5, 1.5])
+
+# ─── LEFT PANEL ───────────────────────────────────────
+with col_main:
+    col1, col2, col3 = st.columns(3)
+    col1.metric(TEXT["metrics"]["outstanding"][language], "฿85,200,000")
+    col2.metric(TEXT["metrics"]["recovery"][language], "65%")
+    col3.metric(TEXT["metrics"]["journey"][language], "70%")
+
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Accounts Contacted", "1,203")
-    col2.metric("Responses Received", "645")
-    col3.metric("Active Conversations", "53")
-    col4.metric("Paid Within 24h", "32%")
+    st.markdown(f"<div class='section-title'>📈 {TEXT['recovery_trend'][language]}</div>", unsafe_allow_html=True)
+    trend_data = pd.DataFrame({
+        "Month": ["May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+        "Total": [220000, 280000, 340000, 400000, 470000, 530000],
+        "Paid": [150000, 180000, 220000, 260000, 300000, 360000]
+    })
+    fig_line = px.line(trend_data, x="Month", y=["Total", "Paid"],
+                       markers=True, color_discrete_sequence=["#1C88E5", "#2EB3A0"])
+    fig_line.update_layout(height=300, showlegend=True)
+    st.plotly_chart(fig_line, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Top Accounts Section ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Top 5 Accounts Likely to Pay (48h)")
-    st.table(
-        df.sort_values("ai_risk_score", ascending=False)
-          .head(5)[["account_id", "name", "risk_score", "loan_type", "contact_channel"]]
-          .rename(columns={
-              "account_id": "Account ID",
-              "name": "Name",
-              "risk_score": "Risk Score",
-              "loan_type": "Loan Type",
-              "contact_channel": "Contact Channel"
-          })
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- Inactive Accounts ---
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Accounts Ignored 7+ Days")
-    inactive = df[df["last_payment_days_ago"] > 30].sort_values("risk_score", ascending=False)
-    st.dataframe(
-        inactive[["account_id", "name", "risk_score", "last_payment_days_ago", "region"]]
+    st.markdown(f"<div class='section-title'>📋 {TEXT['debtor_summary'][language]}</div>", unsafe_allow_html=True)
+    st.dataframe(df[["name", "risk_score", "total_debt", "dpd"]]
         .rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "risk_score": "Risk Score",
-            "last_payment_days_ago": "Last Payment (Days Ago)",
-            "region": "Region"
-        }).head(5),
-        use_container_width=True
-    )
+            "name": "Customer" if language == "🇬🇧 English" else "ชื่อลูกหนี้",
+            "risk_score": "Risk Score" if language == "🇬🇧 English" else "คะแนนความเสี่ยง",
+            "total_debt": "Outstanding" if language == "🇬🇧 English" else "ยอดหนี้",
+            "dpd": "Days Past Due" if language == "🇬🇧 English" else "เกินกำหนด (วัน)"
+        }).head(5), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Pie Chart Segment ---
+# ─── RIGHT PANEL ──────────────────────────────────────
+with col_right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Behavior-Based Segmentation")
-    segment_data = df["response_behavior"].value_counts().reset_index()
-    segment_data.columns = ["Segment", "Count"]
-    fig_segment = px.pie(
-        segment_data,
-        names="Segment",
-        values="Count",
-        hole=0.4,
-        color_discrete_sequence=["#2EB3A0", "#1C88E5", "#0A2342", "#7FDBFF", "#39CCCC"]
-    )
-    st.plotly_chart(fig_segment, use_container_width=True)
+    st.markdown(f"<div class='section-title'>✅ {TEXT['total_recovery_rate'][language]}</div>", unsafe_allow_html=True)
+    donut = pd.DataFrame({"name": ["Recovered", "Remaining"], "value": [65, 35]})
+    fig_donut = px.pie(donut, names="name", values="value", hole=0.6,
+                       color_discrete_sequence=["#2EB3A0", "#E0E0E0"])
+    fig_donut.update_layout(showlegend=False, height=200)
+    st.plotly_chart(fig_donut, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Debtor Profile View ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Debtor Profile View")
-    selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
-    debtor = df[df["account_id"] == selected_account].iloc[0]
-    st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
-    st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
-    st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
-    st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
-    st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
+    st.markdown(f"<div class='section-title'>📊 {TEXT['risk_distribution'][language]}</div>", unsafe_allow_html=True)
+    pie = pd.DataFrame({"Level": ["Low", "Medium", "High"], "Share": [34, 27, 39]})
+    fig_pie = px.pie(pie, names="Level", values="Share",
+                     color_discrete_sequence=["#2EB3A0", "#1C88E5", "#0A2342"])
+    fig_pie.update_layout(showlegend=True, height=250)
+    st.plotly_chart(fig_pie, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown(f"<div class='section-title'>👩‍💼 {TEXT['agent_performance'][language]}</div>", unsafe_allow_html=True)
+    st.markdown("• 🎯 Target: 65%  \n• ✈️ Actual Recovery: 70%  \n• 👥 Agent Avg: 72%")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown(f"<div class='section-title'>📞 {TEXT['channel_accuracy'][language]}</div>", unsafe_allow_html=True)
+    channel = pd.DataFrame({
+        "Channel": ["LINE", "Phone", "Email"],
+        "Accuracy": [68, 54, 47]
+    })
+    fig_bar = px.bar(channel, x="Channel", y="Accuracy", text="Accuracy",
+                     color="Channel", color_discrete_sequence=["#2EB3A0", "#1C88E5", "#FFD43B"])
+    fig_bar.update_layout(height=250, showlegend=False)
+    st.plotly_chart(fig_bar, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown(f"<div class='section-title'>💳 {TEXT['loan_type'][language]}</div>", unsafe_allow_html=True)
+    loan = pd.DataFrame({"Type": ["Personal Loan", "Auto Loan"], "Share": [52, 48]})
+    fig_loan = px.pie(loan, names="Type", values="Share",
+                      color_discrete_sequence=["#1C88E5", "#2EB3A0"])
+    fig_loan.update_layout(showlegend=True, height=220)
+    st.plotly_chart(fig_loan, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown(f"<div class='section-title'>📉 {TEXT['reasons'][language]}</div>", unsafe_allow_html=True)
+    st.markdown("- Insufficient Funds: 42%  \n- Job Loss: 36%  \n- Debt Overlap: 22%")
     st.markdown('</div>', unsafe_allow_html=True)
