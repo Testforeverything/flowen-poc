@@ -320,8 +320,11 @@ def styled_table(df, highlight_col=None):
 # --- Journey Management ---
 if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
-    if "journey_type" not in df.columns:
-        df["journey_type"] = df["risk_level"].map({"Low": "Reminder A", "Medium": "Reminder B", "High": "Voice Prompt"})
+    if "ai_confidence" not in df.columns:
+        import numpy as np
+        np.random.seed(42)
+        df["ai_confidence"] = df["risk_score"] + np.random.normal(0, 5, size=len(df))
+        df["ai_confidence"] = df["ai_confidence"].clip(0, 100)
 
     st.title(" Journey Management Dashboard")
 
@@ -378,15 +381,65 @@ if menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
+    # Current Journeys
+    st.markdown("### Current Journeys")
+    journey_perf = pd.DataFrame({
+        "Journey Type": ["Default Prevention", "Promise to Pay Reinforcement", "Hardship Assistance"],
+        "Status": ["GOOD", "EXCELLENT", "FAIR"]
+    })
+    st.markdown(styled_table(journey_perf, highlight_col="Status"), unsafe_allow_html=True)
+
+    # Time in Journey by Risk Level
+    st.markdown("### Time in Journey by Risk Level")
+    risk_journey_time = pd.DataFrame({
+        "Risk Level": ["Low", "Medium", "High"],
+        "Avg Days in Journey": [2.5, 4.2, 6.7]
+    })
+    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", color_discrete_sequence=["#0984E3", "#00A2C2", "#00B894"])
+    st.plotly_chart(fig_time, use_container_width=True)
+
+    # Stuck Accounts Alert
+    st.markdown("### Stuck Accounts Alert")
+    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
+    if not stuck_accounts.empty:
+        stuck_df = stuck_accounts[["account_id", "name", "dpd", "risk_level", "last_payment_days_ago", "contact_channel"]].rename(columns={
+            "account_id": "Account ID", "name": "Name", "dpd": "Days Past Due",
+            "risk_level": "Risk Level", "last_payment_days_ago": "Last Payment (Days Ago)",
+            "contact_channel": "Contact Channel"
+        })
+        st.markdown(styled_table(stuck_df), unsafe_allow_html=True)
+
+    # AI Journey Suggestion
+    st.markdown("### AI Journey Recommendation (Sample)")
+    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior", "ai_confidence"]].copy()
+    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
+        "Low": "LINE Reminder A", "Medium": "LINE Reminder B", "High": "Voice Prompt"
+    })
+    rec_sample = rec_sample.rename(columns={
+        "account_id": "Account ID", "name": "Name", "risk_level": "Risk Level",
+        "response_behavior": "Behavior", "ai_confidence": "Confidence (%)"
+    })
+    st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
+
+    # Conversion Rate
+    st.markdown("### 🔍 Conversion Rate by Journey Type")
+    if "journey_type" in df.columns and "status_paid" in df.columns:
+        conv_rate = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0)*100
+        st.dataframe(conv_rate.style.format("{:.1f}%"))
+
+    # Avg. Time to Success
+    st.markdown("### ⏱️ Avg. Time to Success by Journey")
+    if "dpd" in df.columns and "journey_type" in df.columns:
+        journey_days = df[df["payment_status"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
+        fig_avg = px.bar(journey_days, x="journey_type", y="dpd", title="Avg. Days to Pay by Journey", color_discrete_sequence=["#0B5394"])
+        st.plotly_chart(fig_avg, use_container_width=True)
+
+    # Confidence Histogram
     st.markdown("### 📊 Journey Confidence Score Distribution")
-    if "ai_confidence" not in df.columns:
-        import numpy as np
-        df["ai_confidence"] = df["risk_score"] / 100 + np.random.normal(0, 0.05, size=len(df))
-    fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0984E3"])
+    fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0B5394"])
     st.plotly_chart(fig_conf, use_container_width=True)
 
-    st.success("✅ Journey Management updated with confidence insights.")
-
+    st.success("✅ Journey Management dashboard updated with all insights and fallback logic.")
 
 
 # --- Recovery KPI ---
