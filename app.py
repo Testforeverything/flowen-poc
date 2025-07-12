@@ -273,6 +273,12 @@ if menu == "Risk Overview":
             st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Journey Management 1 ---
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import numpy as np   # ✅ ต้องมีบรรทัดนี้
+
 def styled_table(df):
     return f"""
     <style>
