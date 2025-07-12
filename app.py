@@ -24,8 +24,8 @@ st.markdown(f"""
     [data-testid="stSidebar"] {{
         background-color: #0a2342;
     }}
-    [data-testid="stSidebar"] .css-1v3fvcr, [data-testid="stSidebar"] .css-10trblm {{
-        color: white;
+    [data-testid="stSidebar"] * {{
+        color: white !important;
     }}
     .lang-toggle {{
         position: fixed;
@@ -33,8 +33,24 @@ st.markdown(f"""
         right: 20px;
         z-index: 1000;
     }}
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: #0a2342;
+        z-index: 999;
+    }}
+    .logo-overlay {{
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        z-index: 1001;
+    }}
 </style>
-<div style="position:fixed; top:10px; left:10px; z-index:1000;">
+<div class="logo-overlay">
     <img src="data:image/png;base64,{logo_base64}" width="140"/>
 </div>
 """, unsafe_allow_html=True)
@@ -53,6 +69,10 @@ df = load_data()
 # ─── Sidebar ──────────────────────────────────
 st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
 menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+
+# All charts using px.* functions below should use:
+# color_discrete_sequence=flowen_colors
+
 
 # All charts using px.* functions below should use:
 # color_discrete_sequence=flowen_colors
