@@ -320,6 +320,7 @@ def styled_table(df, highlight_col=None):
 # --- Journey Management ---
 if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
+
     if "journey_type" not in df.columns:
         df["journey_type"] = df["risk_level"].map({
             "Low": "Default Prevention",
@@ -372,25 +373,25 @@ if menu == "Journey Management":
             line_data = pd.DataFrame({
                 "Month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
                 "Success Rate": [68, 69, 70, 71, 72, 73, 74],
-                "Reminder Effectiveness": [48, 49, 50, 50, 51, 52, 53],
+                "Rraterie": [48, 49, 50, 50, 51, 52, 53],
                 "Drop-off Rate": [28, 27, 26, 25, 24, 23, 22]
             })
             fig_line = go.Figure()
-            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines+markers", name="Success Rate"))
-            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Reminder Effectiveness"], mode="lines+markers", name="Reminder Effectiveness"))
-            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines+markers", name="Drop-off Rate"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("### 🔍 Conversion Rate by Journey Type")
-    if "payment_status" in df.columns:
+    if "journey_type" in df.columns and "payment_status" in df.columns:
         conv_rate = df.groupby("journey_type")["payment_status"].value_counts(normalize=True).unstack().fillna(0)*100
-        st.dataframe(conv_rate.style.background_gradient(cmap="Blues"), use_container_width=True)
+        st.dataframe(conv_rate, use_container_width=True)
 
     st.markdown("### 🌍 Journey Effectiveness by Region")
     if "region" in df.columns:
         heatmap_data = df.groupby(["region", "journey_type"]).size().unstack().fillna(0)
-        st.dataframe(heatmap_data.style.background_gradient(cmap="Purples"), use_container_width=True)
+        st.dataframe(heatmap_data, use_container_width=True)
 
     st.markdown("### ⏱️ Avg. Time to Success by Journey")
     if "dpd" in df.columns:
@@ -414,10 +415,12 @@ if menu == "Journey Management":
     st.markdown("### 🧠 Journey Status Summary")
     if "payment_status" in df.columns:
         donut = df["payment_status"].value_counts().reset_index()
-        fig_donut = px.pie(donut, names="index", values="payment_status", hole=0.4)
+        donut.columns = ["Status", "Count"]
+        fig_donut = px.pie(donut, names="Status", values="Count", hole=0.4)
         st.plotly_chart(fig_donut, use_container_width=True)
 
     st.success("✅ Dashboard insights updated for better journey performance analysis.")
+
 
 
 # --- Recovery KPI ---
