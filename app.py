@@ -22,15 +22,19 @@ logo_base64 = get_base64_logo("flowen_logo.png")
 # ─── Page Config ──────────────────────────────
 st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
 
-# ─── Inject UI CSS ─────────────────────────────
+# ─── Inject Custom CSS ────────────────────────
 st.markdown(f"""
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
     body {{
+        font-family: 'Inter', sans-serif;
+        color: #1C2B36;
         background-color: #F6F8FA;
     }}
     .main .block-container {{
         background-color: #F6F8FA !important;
-        padding-top: 2rem;
+        padding: 2rem 3rem 3rem 3rem;
+        border-radius: 0;
     }}
     [data-testid="stSidebar"] {{
         background-color: #0B2A5B;
@@ -41,9 +45,28 @@ st.markdown(f"""
     .stCard {{
         background-color: #FFFFFF;
         padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1rem;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease-in-out;
+        margin-bottom: 1.5rem;
+    }}
+    thead tr th {{
+        background-color: #E3F2FD !important;
+        color: #0B2A5B !important;
+        font-weight: 600;
+    }}
+    tbody tr:hover {{
+        background-color: #F0F7FF !important;
+        transition: 0.2s;
+    }}
+    details > summary {{
+        font-weight: 600;
+        font-size: 15px;
+        color: #0B2A5B;
+    }}
+    .js-plotly-plot .main-svg .g-title {{
+        font-size: 18px !important;
+        fill: #0B2A5B !important;
     }}
 </style>
 <div style='padding: 10px 0 10px 10px;'>
@@ -94,8 +117,6 @@ with st.sidebar:
 
 # ใช้ selected เป็น menu control
 menu = selected
-
-
 
 
 # All charts using px.* functions below should use:
