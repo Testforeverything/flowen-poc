@@ -302,14 +302,12 @@ elif menu == "Journey Management":
             })
             fig_funnel = px.bar(
                 funnel_data,
-                x="Count",
-                y="Stage",
-                orientation="h",
+                x="Stage",
+                y="Count",
                 text="Count",
-                color_discrete_sequence=flowen_colors
+                color_discrete_sequence=["#0B5394"]
             )
             fig_funnel.update_layout(
-                yaxis=dict(autorange="reversed"),
                 margin=dict(l=10, r=10, t=30, b=10)
             )
             fig_funnel.update_traces(textposition="outside")
@@ -331,12 +329,12 @@ elif menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_line, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True))
+            st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Two Column Layout: Journey Table + Journey Performance Line Chart ───
-    col1, col2 = st.columns(2)
-
-    with col1:
+    # ─── Current Journeys (Full Width) ───
+    with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
         journey_perf = pd.DataFrame({
