@@ -433,6 +433,7 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+
     
 
 # --- Recovery KPI ---
