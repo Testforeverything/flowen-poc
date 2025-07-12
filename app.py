@@ -289,29 +289,49 @@ elif menu == "Journey Management":
                 st.metric(label, value)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Customer Funnel (Horizontal Bar Chart) ───
+    # ─── Customer Funnel + Journey Performance ───
     with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Customer Funnel")
-        funnel_data = pd.DataFrame({
-            "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-            "Count": [8500, 5200, 2100, 865]
-        })
-        fig_funnel = px.bar(
-            funnel_data,
-            x="Count",
-            y="Stage",
-            orientation="h",
-            text="Count",
-            color_discrete_sequence=flowen_colors
-        )
-        fig_funnel.update_layout(
-            yaxis=dict(autorange="reversed"),
-            margin=dict(l=10, r=10, t=30, b=10)
-        )
-        fig_funnel.update_traces(textposition="outside")
-        st.plotly_chart(fig_funnel, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        col_funnel, col_perf = st.columns([1, 1])
+
+        with col_funnel:
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Customer Funnel")
+            funnel_data = pd.DataFrame({
+                "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
+                "Count": [0, 332, 327, 32]
+            })
+            fig_funnel = px.bar(
+                funnel_data,
+                x="Count",
+                y="Stage",
+                orientation="h",
+                text="Count",
+                color_discrete_sequence=flowen_colors
+            )
+            fig_funnel.update_layout(
+                yaxis=dict(autorange="reversed"),
+                margin=dict(l=10, r=10, t=30, b=10)
+            )
+            fig_funnel.update_traces(textposition="outside")
+            st.plotly_chart(fig_funnel, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col_perf:
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Journey Performance")
+            line_data = pd.DataFrame({
+                "Month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+                "Success Rate": [68, 69, 70, 71, 72, 73, 74],
+                "Rraterie": [48, 49, 50, 50, 51, 52, 53],
+                "Drop-off Rate": [28, 27, 26, 25, 24, 23, 22]
+            })
+            fig_line = go.Figure()
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
+            fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
+            st.plotly_chart(fig_line, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Two Column Layout: Journey Table + Journey Performance Line Chart ───
     col1, col2 = st.columns(2)
