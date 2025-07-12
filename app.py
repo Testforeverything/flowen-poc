@@ -278,10 +278,11 @@ elif menu == "Journey Management":
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
+        active_journeys = df[df["status"] == "Active"].shape[0] if "status" in df.columns else 0
         metrics = [
             ("Total Customers", f"{len(df):,}"),
             ("Engagement Rate", "70%"),
-            ("Active Journeys", f"{df[df['status_paid'] == 'Active'].shape[0]:,}")
+            ("Active Journeys", f"{active_journeys:,}")
         ]
         for col, (label, value) in zip(cols, metrics):
             with col:
@@ -432,6 +433,7 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+    
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
