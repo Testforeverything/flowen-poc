@@ -273,11 +273,8 @@ if menu == "Risk Overview":
 
 # --- Journey Management ---
 
-# Add payment_status column based on dpd
-if "payment_status" not in df.columns:
-    df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
-
 elif menu == "Journey Management":
+    df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
 
     # ─── Top 3 KPI Cards ───
@@ -342,9 +339,6 @@ elif menu == "Journey Management":
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
-
-
-
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
