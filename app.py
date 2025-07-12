@@ -317,15 +317,11 @@ def styled_table(df, highlight_col=None):
     {df.to_html(classes='custom-table', escape=False, index=False)}
     """
 
-# --- Journey Management (UI Styling with Insight Enhancements) ---
-import streamlit.components.v1 as components
-
 # --- Journey Management ---
 if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
 
-    # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
         total_customers = len(df)
@@ -343,7 +339,6 @@ if menu == "Journey Management":
                 st.metric(label, value)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Customer Funnel + Journey Performance ───
     with st.container():
         col_funnel, col_perf = st.columns([1, 1])
 
@@ -359,16 +354,9 @@ if menu == "Journey Management":
                     df[df["payment_status"] == "Paid"].shape[0],
                 ]
             })
-            fig_funnel = px.bar(
-                funnel_data,
-                x="Stage",
-                y="Count",
-                text="Count",
-                color_discrete_sequence=["#0B5394"]
-            )
-            fig_funnel.update_layout(margin=dict(l=10, r=10, t=30, b=10))
+            fig_funnel = px.bar(funnel_data, x="Stage", y="Count", text="Count", color_discrete_sequence=["#0B5394"])
             fig_funnel.update_traces(textposition="outside")
-            st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
+            st.plotly_chart(fig_funnel, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col_perf:
@@ -384,78 +372,44 @@ if menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
-            fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-            st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
+            st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Current Journeys (Full Width) ───
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Current Journeys")
-        journey_perf = pd.DataFrame({
-            "Journey Type": [
-                "Default Prevention",
-                "Promise to Pay Reinforcement",
-                "Hardship Assistance"
-            ],
-            "Status": ["GOOD", "EXCELLENT", "FAIR"]
-        })
-        html = styled_table(journey_perf, highlight_col="Status")
-        components.html(html, height=300, scrolling=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("### Conversion Rate by Journey Type")
+    conv_rate = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0)*100
+    st.bar_chart(conv_rate)
 
-    # ─── Time in Journey by Risk Level ───
-    st.markdown("### Time in Journey by Risk Level")
-    risk_journey_time = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [
-            df[df["risk_level"] == "Low"]["dpd"].mean(),
-            df[df["risk_level"] == "Medium"]["dpd"].mean(),
-            df[df["risk_level"] == "High"]["dpd"].mean()
-        ]
+    st.markdown("### Journey Effectiveness by Region")
+    if "region" in df.columns:
+        heatmap_data = df.groupby(["region", "journey_type"]).size().unstack().fillna(0)
+        st.dataframe(heatmap_data.style.background_gradient(cmap="Blues"))
+
+    st.markdown("###  Avg. Time to Success by Journey")
+    if "dpd" in df.columns:
+        journey_days = df[df["payment_status"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
+        fig_time = px.bar(journey_days, x="journey_type", y="dpd", title="Avg. Days to Pay by Journey")
+        st.plotly_chart(fig_time, use_container_width=True)
+
+    st.markdown("### Drop-off Analysis (Simulated)")
+    drop_off = pd.DataFrame({
+        "Step": ["Message 1", "Message 2", "Message 3", "Payment"],
+        "Drop Rate": [100, 72, 42, 20]
     })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
+    fig_drop = px.line(drop_off, x="Step", y="Drop Rate", markers=True, title="Drop-off per Touchpoint")
+    st.plotly_chart(fig_drop, use_container_width=True)
 
-    # ─── Stuck Accounts Alert ───
-    st.markdown("### Stuck Accounts Alert")
-    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
-    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    if not stuck_accounts.empty:
-        styled_df = stuck_accounts[[
-            "account_id", "name", "dpd", "risk_level",
-            "last_payment_days_ago", "contact_channel"
-        ]].rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "dpd": "Days Past Due",
-            "risk_level": "Risk Level",
-            "last_payment_days_ago": "Last Payment (Days Ago)",
-            "contact_channel": "Contact Channel"
-        })
-        html = styled_table(styled_df)
-        components.html(html, height=300, scrolling=True)
+    st.markdown("### Journey Confidence Score Distribution")
+    if "ai_confidence" in df.columns:
+        fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score")
+        st.plotly_chart(fig_conf, use_container_width=True)
 
-    # ─── AI Journey Recommendation ───
-    st.markdown("### AI Journey Recommendation (Sample)")
-    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
-    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
-        "Low": "LINE Reminder A",
-        "Medium": "LINE Reminder B",
-        "High": "Voice Prompt"
-    })
-    rec_sample["Confidence"] = ["87%", "91%", "82%", "89%", "85%"]
-    styled_rec = rec_sample.rename(columns={
-        "account_id": "Account ID",
-        "name": "Name",
-        "risk_level": "Risk Level",
-        "response_behavior": "Behavior",
-        "AI Recommended Journey": "AI Recommended Journey",
-        "Confidence": "Confidence"
-    })
-    html = styled_table(styled_rec)
-    components.html(html, height=300, scrolling=True)
+    st.markdown("### Journey Status Summary")
+    if "status_paid" in df.columns:
+        donut = df["status_paid"].value_counts().reset_index()
+        fig_donut = px.pie(donut, names="index", values="status_paid", hole=0.4)
+        st.plotly_chart(fig_donut, use_container_width=True)
 
+    st.success("✅ Dashboard insights updated for better journey performance analysis.")
 
 
 # --- Recovery KPI ---
