@@ -22,7 +22,7 @@ logo_base64 = get_base64_logo("flowen_logo.png")
 st.markdown(f"""
 <style>
     [data-testid="stSidebar"] {{
-        background-color: #0077b6;
+        background-color: #03045e;
     }}
     [data-testid="stSidebar"] * {{
         color: white !important;
@@ -40,7 +40,7 @@ st.markdown(f"""
         left: 0;
         width: 100%;
         height: 60px;
-        background: #0077b6;
+        background: #03045e;
         z-index: 999;
     }}
     .logo-overlay {{
