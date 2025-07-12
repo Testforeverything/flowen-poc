@@ -287,6 +287,7 @@ def styled_table(df, highlight_col=None):
         df = df.copy()
         df[highlight_col] = df[highlight_col].apply(color_score)
 
+    html_table = df.to_html(classes='custom-table', escape=False, index=False, border=0)
     return f"""
     <style>
     .custom-table {{
@@ -314,7 +315,7 @@ def styled_table(df, highlight_col=None):
         background-color: #ffffff;
     }}
     </style>
-    {df.to_html(classes='custom-table', escape=False, index=False)}
+    {html_table}
     """
 
 # --- Journey Management ---
@@ -385,7 +386,7 @@ if menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
-   # ─── Current Journeys (Full Width) ───
+    # ─── Current Journeys (Full Width) ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
