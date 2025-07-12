@@ -307,9 +307,7 @@ elif menu == "Journey Management":
                 text="Count",
                 color_discrete_sequence=["#0B5394"]
             )
-            fig_funnel.update_layout(
-                margin=dict(l=10, r=10, t=30, b=10)
-            )
+            fig_funnel.update_layout(margin=dict(l=10, r=10, t=30, b=10))
             fig_funnel.update_traces(textposition="outside")
             st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
             st.markdown("</div>", unsafe_allow_html=True)
@@ -331,6 +329,32 @@ elif menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
+    # ─── HTML Table Styling ───
+    def styled_table(df):
+        return df.to_html(classes="styled-table", index=False, escape=False)
+
+    st.markdown("""
+    <style>
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .styled-table thead tr {
+        background-color: #0B5394;
+        color: #ffffff;
+        text-align: left;
+    }
+    .styled-table th, .styled-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+    .styled-table tbody tr:nth-child(even) {
+        background-color: #f3f3f3;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # ─── Current Journeys (Full Width) ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
@@ -343,16 +367,7 @@ elif menu == "Journey Management":
             ],
             "Total": [0, 968, 26]
         })
-        st.markdown("""<style>
-            thead tr th {
-                background-color: #0B5394;
-                color: white;
-                font-weight: 600;
-                border-bottom: 1px solid #ccc;
-                padding: 8px;
-            }
-        </style>""", unsafe_allow_html=True)
-        st.dataframe(journey_perf, use_container_width=True, hide_index=True)
+        st.markdown(styled_table(journey_perf), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
@@ -368,17 +383,8 @@ elif menu == "Journey Management":
     st.markdown("### Stuck Accounts Alert")
     stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
     st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    st.markdown("""<style>
-        thead tr th {
-            background-color: #0B5394;
-            color: white;
-            font-weight: 600;
-            border-bottom: 1px solid #ccc;
-            padding: 8px;
-        }
-    </style>""", unsafe_allow_html=True)
-    st.dataframe(
-        stuck_accounts[[
+    if not stuck_accounts.empty:
+        styled_df = stuck_accounts[[
             "account_id", "name", "dpd", "risk_level",
             "last_payment_days_ago", "contact_channel"
         ]].rename(columns={
@@ -388,9 +394,8 @@ elif menu == "Journey Management":
             "risk_level": "Risk Level",
             "last_payment_days_ago": "Last Payment (Days Ago)",
             "contact_channel": "Contact Channel"
-        }),
-        use_container_width=True, hide_index=True
-    )
+        })
+        st.markdown(styled_table(styled_df), unsafe_allow_html=True)
 
     # ─── AI Journey Recommendation ───
     st.markdown("### AI Journey Recommendation (Sample)")
@@ -400,25 +405,14 @@ elif menu == "Journey Management":
         "Medium": "LINE Reminder B",
         "High": "Voice Prompt"
     })
-    st.markdown("""<style>
-        thead tr th {
-            background-color: #0B5394;
-            color: white;
-            font-weight: 600;
-            border-bottom: 1px solid #ccc;
-            padding: 8px;
-        }
-    </style>""", unsafe_allow_html=True)
-    st.dataframe(
-        rec_sample.rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "risk_level": "Risk Level",
-            "response_behavior": "Behavior",
-            "AI Recommended Journey": "AI Recommended Journey"
-        }),
-        use_container_width=True, hide_index=True
-    )
+    styled_rec = rec_sample.rename(columns={
+        "account_id": "Account ID",
+        "name": "Name",
+        "risk_level": "Risk Level",
+        "response_behavior": "Behavior",
+        "AI Recommended Journey": "AI Recommended Journey"
+    })
+    st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
 
 
 # --- Recovery KPI ---
