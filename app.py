@@ -219,6 +219,7 @@ with col3:
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Debtor Summary & Profile ───
+    
     col_summary, col_profile = st.columns([2, 1])
 
     with col_summary:
