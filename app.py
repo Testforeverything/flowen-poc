@@ -343,7 +343,16 @@ elif menu == "Journey Management":
             ],
             "Total": [0, 968, 26]
         })
-        st.dataframe(journey_perf, use_container_width=True, hide_index=True)
+        st.markdown("""<style>
+    thead tr th {
+        background-color: #0B5394;
+        color: white;
+        font-weight: 600;
+        border-bottom: 1px solid #ccc;
+        padding: 8px;
+    }
+</style>""", unsafe_allow_html=True)
+st.dataframe(journey_perf, use_container_width=True, hide_index=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
@@ -359,7 +368,16 @@ elif menu == "Journey Management":
     st.markdown("### Stuck Accounts Alert")
     stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
     st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    st.dataframe(
+    st.markdown("""<style>
+    thead tr th {
+        background-color: #0B5394;
+        color: white;
+        font-weight: 600;
+        border-bottom: 1px solid #ccc;
+        padding: 8px;
+    }
+</style>""", unsafe_allow_html=True)
+st.dataframe(
         stuck_accounts[[
             "account_id", "name", "dpd", "risk_level",
             "last_payment_days_ago", "contact_channel"
@@ -382,7 +400,16 @@ elif menu == "Journey Management":
         "Medium": "LINE Reminder B",
         "High": "Voice Prompt"
     })
-    st.dataframe(
+    st.markdown("""<style>
+    thead tr th {
+        background-color: #0B5394;
+        color: white;
+        font-weight: 600;
+        border-bottom: 1px solid #ccc;
+        padding: 8px;
+    }
+</style>""", unsafe_allow_html=True)
+st.dataframe(
         rec_sample.rename(columns={
             "account_id": "Account ID",
             "name": "Name",
