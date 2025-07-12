@@ -21,25 +21,35 @@ logo_base64 = get_base64_logo("flowen_logo.png")
 
 # ─── Page Config ──────────────────────────────
 st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
-st.markdown("""
-    <style>
-        body {
-            background-color: #0B2A5B;
-        }
-        .main .block-container {
-            background-color: #0B2A5B !important;
-            color: white;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #0B2A5B;
-        }
-        [data-testid="stSidebar"] * {
-            color: white !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
-st.title("Flowen: Debt Collection AI Dashboard")
+# ─── Inject UI CSS ─────────────────────────────
+st.markdown(f"""
+<style>
+    body {{
+        background-color: #F6F8FA;
+    }}
+    .main .block-container {{
+        background-color: #F6F8FA !important;
+        padding-top: 2rem;
+    }}
+    [data-testid="stSidebar"] {{
+        background-color: #0B2A5B;
+    }}
+    [data-testid="stSidebar"] * {{
+        color: white !important;
+    }}
+    .stCard {{
+        background-color: #FFFFFF;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1rem;
+    }}
+</style>
+<div style='padding: 10px 0 10px 10px;'>
+    <img src='data:image/png;base64,{logo_base64}' width='130'/>
+</div>
+""", unsafe_allow_html=True)
 
 # ─── Load Data ────────────────────────────────
 @st.cache_data
@@ -50,12 +60,6 @@ df = load_data()
 
 # ─── Sidebar Layout ───────────────────────────
 with st.sidebar:
-    st.markdown(f"""
-    <div style='padding: 10px 0 10px 10px;'>
-        <img src='data:image/png;base64,{logo_base64}' width='130'/>
-    </div>
-    """, unsafe_allow_html=True)
-
     selected = option_menu(
         menu_title="",
         options=[
@@ -90,6 +94,7 @@ with st.sidebar:
 
 # ใช้ selected เป็น menu control
 menu = selected
+
 
 
 
