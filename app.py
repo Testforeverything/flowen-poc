@@ -425,7 +425,7 @@ st.plotly_chart(fig_conf, use_container_width=True)
 
 
 # --- Recovery KPI ---
-elif menu == "Recovery KPI":
+if menu == "Recovery KPI":
     st.title(" Recovery KPI Dashboard")
 
     st.markdown("###  Recovery Overview (Month-to-date)")
