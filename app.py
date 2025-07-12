@@ -330,11 +330,10 @@ def styled_table(df):
     """
 
 # --- Journey Management ---
-if menu == "Journey Management":
-    st.title(" Journey Management Dashboard")
 
-    # Derived Fields
-    df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else "In Progress" if x < 30 else "Stuck")
+if menu == "Journey Management":
+    df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("In Progress" if x < 30 else "Stuck"))
+
     if "journey_type" not in df.columns:
         def map_journey(row):
             if row["risk_level"] == "High":
@@ -346,15 +345,19 @@ if menu == "Journey Management":
             else:
                 return "General Follow-up"
         df["journey_type"] = df.apply(map_journey, axis=1)
+
     if "ai_confidence" not in df.columns:
         np.random.seed(42)
         df["ai_confidence"] = (df["ai_risk_score"] * 100).clip(0, 100)
+
+    st.title("Journey Management Dashboard")
 
     # KPI Cards
     total_customers = len(df)
     engaged_customers = df[df["response_behavior"].isin(["Responsive", "Slow"])].shape[0]
     engagement_rate = round((engaged_customers / total_customers) * 100, 1)
     active_journeys = df[df["dpd"] > 0].shape[0]
+
     cols = st.columns(3)
     metrics = [
         ("Total Customers", f"{total_customers:,}"),
@@ -395,20 +398,20 @@ if menu == "Journey Management":
 
     # Current Journeys
     st.markdown("### Current Journeys")
-    journey_perf = df["journey_type"].value_counts().reset_index()
-    journey_perf.columns = ["Journey Type", "Total"]
-    if not journey_perf.empty:
+    if "journey_type" in df.columns:
+        journey_perf = df["journey_type"].value_counts().reset_index()
+        journey_perf.columns = ["Journey Type", "Total"]
         st.markdown(styled_table(journey_perf), unsafe_allow_html=True)
     else:
-        st.warning("❗️ไม่พบข้อมูล Current Journeys")
+        st.markdown("<p>No journey type data available.</p>", unsafe_allow_html=True)
 
-    # Time in Journey
+    # Time in Journey by Risk Level
     st.markdown("### Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [2.5, 4.2, 6.7]
     })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", color_discrete_sequence=flowen_colors)
+    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", color_discrete_sequence=["#0984E3", "#00A2C2", "#00B894"])
     st.plotly_chart(fig_time, use_container_width=True)
 
     # Stuck Accounts
@@ -422,7 +425,7 @@ if menu == "Journey Management":
         })
         st.markdown(styled_table(stuck_df), unsafe_allow_html=True)
     else:
-        st.warning("❗️ไม่พบบัญชีที่ค้างเกิน 30 วัน")
+        st.markdown("<p>No overdue accounts found.</p>", unsafe_allow_html=True)
 
     # AI Journey Suggestion
     st.markdown("### AI Journey Recommendation (Sample)")
@@ -432,33 +435,27 @@ if menu == "Journey Management":
         "account_id": "Account ID", "name": "Name", "risk_level": "Risk Level",
         "response_behavior": "Behavior", "ai_confidence": "Confidence (%)"
     })
-    if not rec_sample.empty:
-        st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
-    else:
-        st.warning("❗️ไม่พบข้อมูลสำหรับ AI Journey Suggestion")
+    st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
 
     # Conversion Rate
     st.markdown("### 🔍 Conversion Rate by Journey Type")
     if "journey_type" in df.columns and "status_paid" in df.columns:
-        conversion = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0) * 100
-        conversion = conversion.round(1).reset_index()
-        st.markdown(styled_table(conversion), unsafe_allow_html=True)
-    else:
-        st.warning("❗️ไม่สามารถคำนวณ Conversion Rate ได้")
+        conv = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0)*100
+        conv = conv.round(1).reset_index()
+        st.markdown(styled_table(conv), unsafe_allow_html=True)
 
-    # Avg Time to Success
+    # Avg. Time to Success
     st.markdown("### ⏱️ Avg. Time to Success by Journey")
-    avg_days = df[df["status_paid"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
-    if not avg_days.empty:
+    if "journey_type" in df.columns and "dpd" in df.columns:
+        avg_days = df[df["status_paid"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
         fig_avg = px.bar(avg_days, x="journey_type", y="dpd", title="Avg. Days to Pay by Journey", color_discrete_sequence=["#0B5394"])
         st.plotly_chart(fig_avg, use_container_width=True)
-    else:
-        st.warning("❗️ไม่พบข้อมูลการจ่ายสำเร็จ")
 
     # Confidence Histogram
     st.markdown("### 📊 Journey Confidence Score Distribution")
     fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0B5394"])
     st.plotly_chart(fig_conf, use_container_width=True)
+
 
 
 # --- Recovery KPI ---
