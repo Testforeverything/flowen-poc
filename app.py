@@ -278,10 +278,13 @@ elif menu == "Journey Management":
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
-        active_journeys = df[df["status"] == "Active"].shape[0] if "status" in df.columns else 0
+        total_customers = len(df)
+        engaged_customers = df[df["response_behavior"].isin(["Responsive", "Slow"])].shape[0]
+        engagement_rate = round((engaged_customers / total_customers) * 100, 1)
+        active_journeys = df[df["dpd"] > 0].shape[0]
         metrics = [
-            ("Total Customers", f"{len(df):,}"),
-            ("Engagement Rate", "70%"),
+            ("Total Customers", f"{total_customers:,}"),
+            ("Engagement Rate", f"{engagement_rate}%"),
             ("Active Journeys", f"{active_journeys:,}")
         ]
         for col, (label, value) in zip(cols, metrics):
@@ -299,7 +302,12 @@ elif menu == "Journey Management":
             st.markdown("### Customer Funnel")
             funnel_data = pd.DataFrame({
                 "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-                "Count": [0, 332, 327, 32]
+                "Count": [
+                    df[df["response_behavior"] == "Silent"].shape[0],
+                    df[df["response_behavior"].isin(["Responsive", "Slow", "Ignored"])].shape[0],
+                    df[df["status_paid"] == "Promise to Pay"].shape[0],
+                    df[df["status_paid"] == "Paid"].shape[0],
+                ]
             })
             fig_funnel = px.bar(
                 funnel_data,
@@ -394,7 +402,11 @@ elif menu == "Journey Management":
     st.markdown("### Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [2.5, 4.2, 6.7]
+        "Avg Days in Journey": [
+            df[df["risk_level"] == "Low"]["dpd"].mean(),
+            df[df["risk_level"] == "Medium"]["dpd"].mean(),
+            df[df["risk_level"] == "High"]["dpd"].mean()
+        ]
     })
     fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
     st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
@@ -434,7 +446,6 @@ elif menu == "Journey Management":
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
 
-    
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
