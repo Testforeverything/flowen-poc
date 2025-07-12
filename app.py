@@ -273,54 +273,10 @@ if menu == "Risk Overview":
 
 # --- Journey Management 1 ---
 
-def styled_table(df, highlight_col=None):
-    def color_score(val):
-        colors = {
-            "EXCELLENT": "green",
-            "GOOD": "dodgerblue",
-            "FAIR": "orange",
-            "POOR": "red"
-        }
-        return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
-
-    df = df.copy()
-    if highlight_col and highlight_col in df.columns:
-        df[highlight_col] = df[highlight_col].apply(color_score)
-
-    html = f"""
-    <style>
-    .custom-table {{
-        border-collapse: collapse;
-        width: 100%;
-        font-size: 14px;
-        font-family: 'Arial', sans-serif;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }}
-    .custom-table thead {{
-        background-color: #EDF0FB;
-        color: #222;
-        text-align: left;
-    }}
-    .custom-table th, .custom-table td {{
-        padding: 12px 16px;
-        border-bottom: 1px solid #ddd;
-    }}
-    .custom-table tbody tr:nth-child(even) {{
-        background-color: #F8FBFF;
-    }}
-    .custom-table tbody tr:nth-child(odd) {{
-        background-color: #ffffff;
-    }}
-    </style>
-    """ + df.to_html(classes="custom-table", index=False, escape=False)
-
-    return html
+# --- Journey Management (UI Styling with Insight Enhancements) ---
 if menu == "Journey Management":
-    st.title(" Journey Management Dashboard")
+    st.title("Journey Management Dashboard")
 
-    # Prepare data
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
 
     # ─── Top 3 KPI Cards ───
@@ -341,11 +297,11 @@ if menu == "Journey Management":
                 st.metric(label, value)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Customer Funnel + Journey Performance ───
+    # ─── Customer Funnel & Journey Performance ───
     with st.container():
-        col_funnel, col_perf = st.columns([1, 1])
+        col1, col2 = st.columns(2)
 
-        with col_funnel:
+        with col1:
             st.markdown("<div class='stCard'>", unsafe_allow_html=True)
             st.markdown("### Customer Funnel")
             funnel_data = pd.DataFrame({
@@ -357,18 +313,12 @@ if menu == "Journey Management":
                     df[df["payment_status"] == "Paid"].shape[0],
                 ]
             })
-            fig_funnel = px.bar(
-                funnel_data,
-                x="Stage",
-                y="Count",
-                text="Count",
-                color_discrete_sequence=["#0B5394"]
-            )
+            fig_funnel = px.bar(funnel_data, x="Stage", y="Count", text="Count", color_discrete_sequence=["#0B5394"])
             fig_funnel.update_traces(textposition="outside")
             st.plotly_chart(fig_funnel, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-        with col_perf:
+        with col2:
             st.markdown("<div class='stCard'>", unsafe_allow_html=True)
             st.markdown("### Journey Performance")
             line_data = pd.DataFrame({
@@ -384,47 +334,33 @@ if menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Current Journeys (Full Width) ───
+    # ─── Current Journeys ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
         journey_perf = pd.DataFrame({
-            "Journey Type": [
-                "Default Prevention",
-                "Promise to Pay Reinforcement",
-                "Hardship Assistance"
-            ],
+            "Journey Type": ["Default Prevention", "Promise to Pay Reinforcement", "Hardship Assistance"],
             "Status": ["GOOD", "EXCELLENT", "FAIR"]
         })
-        styled_html = styled_table(journey_perf, highlight_col="Status")
-        st.markdown(styled_html, unsafe_allow_html=True)
+        html = styled_table(journey_perf, highlight_col="Status")
+        st.components.v1.html(html, height=250, scrolling=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Time in Journey by Risk Level ───
-    st.markdown("### Time in Journey by Risk Level")
-    risk_journey_time = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [
-            round(df[df["risk_level"] == "Low"]["dpd"].mean(), 1),
-            round(df[df["risk_level"] == "Medium"]["dpd"].mean(), 1),
-            round(df[df["risk_level"] == "High"]["dpd"].mean(), 1)
-        ]
-    })
-    fig_time = px.bar(
-        risk_journey_time,
-        x="Risk Level",
-        y="Avg Days in Journey",
-        color="Risk Level",
-        title="Average Time in Journey",
-        color_discrete_sequence=flowen_colors
-    )
-    st.plotly_chart(fig_time, use_container_width=True)
+    # ─── Risk-Based Journey Heatmap ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Journey Distribution by Risk Level")
+        journey_risk = df.groupby(["journey_type", "risk_level"]).size().reset_index(name="Count")
+        fig_heat = px.density_heatmap(journey_risk, x="journey_type", y="risk_level", z="Count", color_continuous_scale="Blues")
+        st.plotly_chart(fig_heat, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Stuck Accounts Alert ───
-    st.markdown("### Stuck Accounts Alert")
-    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
-    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    if not stuck_accounts.empty:
+    # ─── Stuck Accounts ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Stuck Accounts Alert")
+        stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
+        st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
         styled_df = stuck_accounts[[
             "account_id", "name", "dpd", "risk_level",
             "last_payment_days_ago", "contact_channel"
@@ -437,24 +373,29 @@ if menu == "Journey Management":
             "contact_channel": "Contact Channel"
         })
         st.markdown(styled_table(styled_df), unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── AI Journey Recommendation ───
-    st.markdown("### AI Journey Recommendation (Sample)")
-    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
-    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
-        "Low": "LINE Reminder A",
-        "Medium": "LINE Reminder B",
-        "High": "Voice Prompt"
-    })
-    styled_rec = rec_sample.rename(columns={
-        "account_id": "Account ID",
-        "name": "Name",
-        "risk_level": "Risk Level",
-        "response_behavior": "Behavior",
-        "AI Recommended Journey": "AI Recommended Journey"
-    })
-    st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
-
+    # ─── AI Journey Suggestion ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### AI Journey Recommendation (Sample)")
+        rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
+        rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
+            "Low": "LINE Reminder A",
+            "Medium": "LINE Reminder B",
+            "High": "Voice Prompt"
+        })
+        rec_sample["Confidence Score"] = ["87%", "91%", "82%", "89%", "85%"]
+        styled_rec = rec_sample.rename(columns={
+            "account_id": "Account ID",
+            "name": "Name",
+            "risk_level": "Risk Level",
+            "response_behavior": "Behavior",
+            "AI Recommended Journey": "AI Recommended Journey",
+            "Confidence Score": "Confidence"
+        })
+        st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 # --- Recovery KPI ---
