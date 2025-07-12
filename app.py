@@ -377,10 +377,12 @@ with col2:
     st.plotly_chart(fig_line, use_container_width=True)
 
 # --- Current Journeys ---
+import streamlit.components.v1 as components
+
 st.markdown("### Current Journeys")
 journey_summary = df["journey_type"].value_counts().reset_index()
 journey_summary.columns = ["Journey Type", "Total Customers"]
-st.markdown(styled_table(journey_summary), unsafe_allow_html=True)
+components.html(styled_table(journey_summary), height=300, scrolling=True)
 
 # Time in Journey by Risk Level
 st.markdown("### Time in Journey by Risk Level")
