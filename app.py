@@ -448,7 +448,7 @@ conversion = conversion.round(1).reset_index()
 styled_html = styled_table(conversion)
 
 # แสดง HTML table สวยงามด้วย components.html
-components.html(styled_html, height=400, scrolling=True)
+components.html(styled_html, height=300, scrolling=True)
 
 
 # --- Confidence Histogram ---
