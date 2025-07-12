@@ -19,32 +19,6 @@ def get_base64_logo(path):
 
 logo_base64 = get_base64_logo("flowen_logo.png")
 
-# ─── Inject UI with Logo, Gradient & Sidebar Theme ─
-st.markdown(f"""
-<style>
-    [data-testid="stSidebar"] {{
-        background-color: #0B2A5B;
-    }}
-    [data-testid="stSidebar"] * {{
-        color: white !important;
-    }}
-    .logo-overlay {{
-        padding-top: 10px;
-        padding-left: 16px;
-        padding-bottom: 5px;
-    }}
-    .st-emotion-cache-1v0mbdj span {{
-        font-size: 16px;
-    }}
-    .st-emotion-cache-1v0mbdj svg {{
-        margin-right: 6px;
-    }}
-</style>
-<div class="logo-overlay">
-    <img src="data:image/png;base64,{logo_base64}" width="130"/>
-</div>
-""", unsafe_allow_html=True)
-
 # ─── Page Config ──────────────────────────────
 st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
 st.title("Flowen: Debt Collection AI Dashboard")
@@ -56,8 +30,14 @@ def load_data():
 
 df = load_data()
 
-# ─── Sidebar Menu with Icons ──────────────────
+# ─── Sidebar Layout ───────────────────────────
 with st.sidebar:
+    st.markdown(f"""
+    <div style='padding: 10px 0 10px 10px;'>
+        <img src='data:image/png;base64,{logo_base64}' width='130'/>
+    </div>
+    """, unsafe_allow_html=True)
+
     selected = option_menu(
         menu_title="",
         options=[
@@ -90,8 +70,9 @@ with st.sidebar:
         }
     )
 
-# ให้ selected ใช้แทน menu ที่ใช้ใน if-else เดิม
+# ใช้ selected เป็น menu control
 menu = selected
+
 
 # All charts using px.* functions below should use:
 # color_discrete_sequence=flowen_colors
