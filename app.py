@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from PIL import Image
 import base64
 from io import BytesIO
+from streamlit_option_menu import option_menu
 
 # ─── Flowen Gradient Color Palette ─────────────
 flowen_colors = ["#00B894", "#00A2C2", "#0984E3"]
@@ -22,36 +23,25 @@ logo_base64 = get_base64_logo("flowen_logo.png")
 st.markdown(f"""
 <style>
     [data-testid="stSidebar"] {{
-        background-color: #03045e;
+        background-color: #0B2A5B;
     }}
     [data-testid="stSidebar"] * {{
         color: white !important;
     }}
-    .lang-toggle {{
-        position: fixed;
-        top: 15px;
-        right: 20px;
-        z-index: 1000;
-    }}
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 60px;
-        background: #03045e;
-        z-index: 999;
-    }}
     .logo-overlay {{
-        position: fixed;
-        top: 10px;
-        left: 12px;
-        z-index: 1001;
+        padding-top: 10px;
+        padding-left: 16px;
+        padding-bottom: 5px;
+    }}
+    .st-emotion-cache-1v0mbdj span {{
+        font-size: 16px;
+    }}
+    .st-emotion-cache-1v0mbdj svg {{
+        margin-right: 6px;
     }}
 </style>
 <div class="logo-overlay">
-    <img src="data:image/png;base64,{logo_base64}" width="140"/>
+    <img src="data:image/png;base64,{logo_base64}" width="130"/>
 </div>
 """, unsafe_allow_html=True)
 
@@ -66,13 +56,42 @@ def load_data():
 
 df = load_data()
 
-# ─── Sidebar ──────────────────────────────────
-st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
-menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+# ─── Sidebar Menu with Icons ──────────────────
+with st.sidebar:
+    selected = option_menu(
+        menu_title="",
+        options=[
+            "Risk Overview",
+            "Journey Management",
+            "Recovery KPI",
+            "Behavioral Insights",
+            "Settings · Help"
+        ],
+        icons=[
+            "bar-chart-line",
+            "bar-chart",
+            "pie-chart",
+            "graph-up",
+            "gear"
+        ],
+        default_index=0,
+        styles={
+            "container": {"padding": "0!important", "background-color": "#0B2A5B"},
+            "icon": {"color": "white", "font-size": "18px"},
+            "nav-link": {
+                "color": "#F1F1F1",
+                "font-size": "16px",
+                "text-align": "left",
+                "margin": "0px",
+                "padding": "10px 20px",
+                "--hover-color": "#1C3A6B"
+            },
+            "nav-link-selected": {"background-color": "#29C2D1", "color": "#0B2A5B", "font-weight": "bold"},
+        }
+    )
 
-# All charts using px.* functions below should use:
-# color_discrete_sequence=flowen_colors
-
+# ให้ selected ใช้แทน menu ที่ใช้ใน if-else เดิม
+menu = selected
 
 # All charts using px.* functions below should use:
 # color_discrete_sequence=flowen_colors
