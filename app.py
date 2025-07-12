@@ -271,18 +271,19 @@ if menu == "Risk Overview":
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
 
+# --- Journey Management ---
 elif menu == "Journey Management":
     st.title(" Journey Management Dashboard")
 
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
-        kpis = [
-            ("Total Customers", "1,000"),
-            ("Engagement Rate", "64.9%"),
-            ("Active Journeys", "649")
+        metrics = [
+            ("Total Customers", "21,500"),
+            ("Engagement Rate", "70%"),
+            ("Active Journeys", "14,450")
         ]
-        for col, (label, value) in zip(cols, kpis):
+        for col, (label, value) in zip(cols, metrics):
             with col:
                 st.markdown("<div class='stCard'>", unsafe_allow_html=True)
                 st.metric(label, value)
@@ -294,7 +295,7 @@ elif menu == "Journey Management":
         st.markdown("### Customer Funnel")
         funnel_data = pd.DataFrame({
             "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-            "Count": [0, 332, 327, 32]
+            "Count": [8500, 5200, 2100, 865]
         })
         fig_funnel = px.bar(
             funnel_data,
@@ -312,21 +313,21 @@ elif menu == "Journey Management":
         st.plotly_chart(fig_funnel, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Two Column Layout: Current Journeys Table + Journey Performance Line Chart ───
+    # ─── Two Column Layout: Journey Table + Journey Performance Line Chart ───
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
         journey_perf = pd.DataFrame({
-            "Journey": [
+            "Journey Type": [
                 "Default Prevention",
                 "Promise to Pay Reinforcement",
                 "Hardship Assistance"
             ],
-            "Count": [0, 968, 26]
+            "Total": [0, 968, 26]
         })
-        st.dataframe(journey_perf.rename(columns={"Journey": "", "Count": ""}), use_container_width=True)
+        st.dataframe(journey_perf, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
@@ -352,14 +353,7 @@ elif menu == "Journey Management":
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [2.5, 4.2, 6.7]
     })
-    fig_time = px.bar(
-        risk_journey_time,
-        x="Risk Level",
-        y="Avg Days in Journey",
-        color="Risk Level",
-        title="Average Time in Journey",
-        color_discrete_sequence=flowen_colors
-    )
+    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
     st.plotly_chart(fig_time, use_container_width=True)
 
     # ─── Stuck Accounts Alert ───
