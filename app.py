@@ -322,6 +322,14 @@ if menu == "Journey Management":
 
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
 
+    # Create journey_type from risk_level if not exists
+    if "journey_type" not in df.columns:
+        df["journey_type"] = df["risk_level"].map({
+            "Low": "Default Prevention",
+            "Medium": "Promise to Pay Reinforcement",
+            "High": "Hardship Assistance"
+        })
+
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
@@ -439,7 +447,6 @@ if menu == "Journey Management":
         })
         st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
-
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
