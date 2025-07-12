@@ -61,3 +61,15 @@ st.markdown(f"""
         </select>
     </div>
 """, unsafe_allow_html=True)
+
+from flowen_helpers_theme import (
+    inject_ui_theme,
+    flowen_pie,
+    flowen_bar,
+    flowen_line,
+    flowen_funnel,
+    flowen_histogram
+)
+
+inject_ui_theme("flowen_logo.png")
+
