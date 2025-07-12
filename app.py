@@ -305,8 +305,8 @@ elif menu == "Journey Management":
                 "Count": [
                     df[df["response_behavior"] == "Silent"].shape[0],
                     df[df["response_behavior"].isin(["Responsive", "Slow", "Ignored"])].shape[0],
-                    df[df["status"] == "Promise to Pay"].shape[0],
-                    df[df["status"] == "Paid"].shape[0],
+                    df[df["status_paid"] == "Promise to Pay"].shape[0],
+                    df[df["status_paid"] == "Paid"].shape[0],
                 ]
             })
             fig_funnel = px.bar(
@@ -405,6 +405,7 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+
 
 
 # --- Recovery KPI ---
