@@ -311,7 +311,7 @@ elif menu == "Journey Management":
                 margin=dict(l=10, r=10, t=30, b=10)
             )
             fig_funnel.update_traces(textposition="outside")
-            st.plotly_chart(fig_funnel, use_container_width=True)
+            st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col_perf:
@@ -328,9 +328,7 @@ elif menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-            st.plotly_chart(fig_line, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            st.plotly_chart(fig_line, use_container_width=True)
+            st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Current Journeys (Full Width) ───
@@ -345,24 +343,7 @@ elif menu == "Journey Management":
             ],
             "Total": [0, 968, 26]
         })
-        st.dataframe(journey_perf, use_container_width=True, use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Journey Performance")
-        line_data = pd.DataFrame({
-            "Month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
-            "Success Rate": [68, 69, 70, 71, 72, 73, 74],
-            "Rraterie": [48, 49, 50, 50, 51, 52, 53],
-            "Drop-off Rate": [28, 27, 26, 25, 24, 23, 22]
-        })
-        fig_line = go.Figure()
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
-        fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-        st.plotly_chart(fig_line, use_container_width=True)
+        st.dataframe(journey_perf, use_container_width=True, hide_index=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
@@ -372,7 +353,7 @@ elif menu == "Journey Management":
         "Avg Days in Journey": [2.5, 4.2, 6.7]
     })
     fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_time, use_container_width=True)
+    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
 
     # ─── Stuck Accounts Alert ───
     st.markdown("### Stuck Accounts Alert")
@@ -387,10 +368,10 @@ elif menu == "Journey Management":
             "name": "Name",
             "dpd": "Days Past Due",
             "risk_level": "Risk Level",
-            "last_payment_days_ago": "Last Payment (Days Ago, use_container_width=True, hide_index=True)",
+            "last_payment_days_ago": "Last Payment (Days Ago)",
             "contact_channel": "Contact Channel"
         }),
-        use_container_width=True
+        use_container_width=True, hide_index=True
     )
 
     # ─── AI Journey Recommendation ───
@@ -408,8 +389,8 @@ elif menu == "Journey Management":
             "risk_level": "Risk Level",
             "response_behavior": "Behavior",
             "AI Recommended Journey": "AI Recommended Journey"
-        }, use_container_width=True, hide_index=True),
-        use_container_width=True
+        }),
+        use_container_width=True, hide_index=True
     )
 
 
