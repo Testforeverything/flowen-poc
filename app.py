@@ -270,9 +270,6 @@ if menu == "Risk Overview":
             st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
-
-
-
 # --- Journey Management ---
 elif menu == "Journey Management":
     st.title("Journey Management Dashboard")
@@ -403,6 +400,8 @@ elif menu == "Journey Management":
         }),
         use_container_width=True
     )
+
+
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
     st.title(" Recovery KPI Dashboard")
