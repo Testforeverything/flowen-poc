@@ -338,7 +338,70 @@ elif menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Current Journeys (Full Width) ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Current Journeys")
+        journey_perf = pd.DataFrame({
+            "Journey Type": [
+                "Default Prevention",
+                "Promise to Pay Reinforcement",
+                "Hardship Assistance"
+            ],
+            "Status": ["GOOD", "EXCELLENT", "FAIR"]
+        })
+        st.markdown(styled_table(journey_perf, highlight_col="Status"), unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Time in Journey by Risk Level ───
+    st.markdown("### Time in Journey by Risk Level")
+    risk_journey_time = pd.DataFrame({
+        "Risk Level": ["Low", "Medium", "High"],
+        "Avg Days in Journey": [
+            df[df["risk_level"] == "Low"]["dpd"].mean(),
+            df[df["risk_level"] == "Medium"]["dpd"].mean(),
+            df[df["risk_level"] == "High"]["dpd"].mean()
+        ]
+    })
+    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
+    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
+
+    # ─── Stuck Accounts Alert ───
+    st.markdown("### Stuck Accounts Alert")
+    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
+    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
+    if not stuck_accounts.empty:
+        styled_df = stuck_accounts[[
+            "account_id", "name", "dpd", "risk_level",
+            "last_payment_days_ago", "contact_channel"
+        ]].rename(columns={
+            "account_id": "Account ID",
+            "name": "Name",
+            "dpd": "Days Past Due",
+            "risk_level": "Risk Level",
+            "last_payment_days_ago": "Last Payment (Days Ago)",
+            "contact_channel": "Contact Channel"
+        })
+        st.markdown(styled_table(styled_df), unsafe_allow_html=True)
+
+    # ─── AI Journey Recommendation ───
+    st.markdown("### AI Journey Recommendation (Sample)")
+    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
+    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
+        "Low": "LINE Reminder A",
+        "Medium": "LINE Reminder B",
+        "High": "Voice Prompt"
+    })
+    styled_rec = rec_sample.rename(columns={
+        "account_id": "Account ID",
+        "name": "Name",
+        "risk_level": "Risk Level",
+        "response_behavior": "Behavior",
+        "AI Recommended Journey": "AI Recommended Journey"
+    })
+    st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
