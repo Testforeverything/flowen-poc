@@ -213,7 +213,7 @@ if menu == "Risk Overview":
                 loan_dist,
                 names="Loan Type",
                 values="Count",
-                hole=0.1,
+                hole=0.0,
                 title="Loan Type Breakdown",
                 color_discrete_sequence=flowen_colors
             )
