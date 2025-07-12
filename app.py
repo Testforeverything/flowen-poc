@@ -271,6 +271,51 @@ if menu == "Risk Overview":
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
 
+def styled_table(df, highlight_col=None):
+    def color_score(val):
+        colors = {
+            "EXCELLENT": "green",
+            "GOOD": "dodgerblue",
+            "FAIR": "orange",
+            "POOR": "red"
+        }
+        return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
+
+    if highlight_col:
+        df = df.copy()
+        df[highlight_col] = df[highlight_col].apply(color_score)
+
+    return f"""
+    <style>
+    .custom-table {{
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+        font-family: 'Arial', sans-serif;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }}
+    .custom-table thead {{
+        background-color: #EDF0FB;
+        color: #222;
+        text-align: left;
+    }}
+    .custom-table th, .custom-table td {{
+        padding: 12px 16px;
+        border-bottom: 1px solid #ddd;
+    }}
+    .custom-table tbody tr:nth-child(even) {{
+        background-color: #F8FBFF;
+    }}
+    .custom-table tbody tr:nth-child(odd) {{
+        background-color: #ffffff;
+    }}
+    </style>
+    {df.to_html(classes='custom-table', escape=False, index=False)}
+    """
+
+
 # --- Journey Management ---
 
 def styled_table(df, highlight_col=None):
@@ -447,6 +492,7 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+
 
 
 # --- Recovery KPI ---
