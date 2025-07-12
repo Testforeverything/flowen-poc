@@ -338,64 +338,24 @@ elif menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── HTML Table Styling ───
-    def styled_table(df, highlight_col=None):
-        def color_score(val):
-            colors = {
-                "EXCELLENT": "green",
-                "GOOD": "dodgerblue",
-                "FAIR": "orange",
-                "POOR": "red"
-            }
-            return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
-
-        if highlight_col:
-            df = df.copy()
-            df[highlight_col] = df[highlight_col].apply(color_score)
-
-        return f"""
-        <style>
-        .custom-table {{
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 14px;
-            font-family: 'Arial', sans-serif;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }}
-        .custom-table thead {{
-            background-color: #EDF0FB;
-            color: #222;
-            text-align: left;
-        }}
-        .custom-table th, .custom-table td {{
-            padding: 12px 16px;
-            border-bottom: 1px solid #ddd;
-        }}
-        .custom-table tbody tr:nth-child(even) {{
-            background-color: #F8FBFF;
-        }}
-        .custom-table tbody tr:nth-child(odd) {{
-            background-color: #ffffff;
-        }}
-        </style>
-        {df.to_html(classes="custom-table", escape=False, index=False)}
-        """
-
-    # ─── Current Journeys (Full Width) ───
+    # ─── Region-Based Journey Suggestions ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Current Journeys")
-        journey_perf = pd.DataFrame({
-            "Journey Type": [
-                "Default Prevention",
-                "Promise to Pay Reinforcement",
-                "Hardship Assistance"
+        st.markdown("### Recommended Journey by Region")
+        region_suggestion = pd.DataFrame({
+            "Region": ["Bangkok", "Central", "North", "Northeast", "South"],
+            "Top Behavior": [
+                "Ignored", "Ignored", "Slow", "Responsive", "Ignored"
             ],
-            "Status": ["GOOD", "EXCELLENT", "FAIR"]
+            "Suggested Journey": [
+                "Voice Bot Escalation",
+                "Voice Reminder + Line Backup",
+                "Gentle Reminder Script",
+                "LINE Follow-Up",
+                "Aggressive Voice Reminder"
+            ]
         })
-        st.markdown(styled_table(journey_perf, highlight_col="Status"), unsafe_allow_html=True)
+        st.markdown(styled_table(region_suggestion), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
