@@ -275,33 +275,99 @@ if menu == "Risk Overview":
 
 # --- Journey Management ---
 elif menu == "Journey Management":
-    st.title(" Journey Management Dashboard")
+    st.title("Journey Management Dashboard")
 
-    st.markdown("###  Journey Funnel Overview")
-    funnel_data = pd.DataFrame({
-        "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-        "Count": [8500, 5200, 2100, 865]
-    })
-    fig_funnel = px.funnel(funnel_data, x="Count", y="Stage", title="Debtor Funnel Progress", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_funnel, use_container_width=True)
+    # ─── Top Metrics Summary ───
+    with st.container():
+        cols = st.columns(3)
+        metrics = [
+            ("Total Customers", "21,500"),
+            ("Engagement Rate", "70%"),
+            ("Active Journeys", "14,450")
+        ]
+        for col, (label, value) in zip(cols, metrics):
+            with col:
+                st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+                st.metric(label, value)
+                st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("###  Journey Type Performance")
-    journey_perf = pd.DataFrame({
-        "Journey": ["LINE Reminder A", "LINE Reminder B", "Voice Prompt", "Manual Call"],
-        "Conversion Rate (%)": [31, 42, 38, 28],
-        "Avg Days to Pay": [4.2, 3.5, 4.0, 6.1]
-    })
-    st.dataframe(journey_perf)
+    # ─── Debtor Funnel as Horizontal Bar Chart ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Customer Funnel")
+        funnel_data = pd.DataFrame({
+            "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
+            "Count": [12000, 7500, 3200, 1050]
+        })
+        fig_funnel = px.bar(
+            funnel_data,
+            x="Count",
+            y="Stage",
+            orientation="h",
+            text="Count",
+            color_discrete_sequence=flowen_colors
+        )
+        fig_funnel.update_layout(
+            yaxis=dict(autorange="reversed"),
+            xaxis_title=None,
+            yaxis_title=None,
+            margin=dict(l=10, r=10, t=30, b=10)
+        )
+        fig_funnel.update_traces(textposition="outside")
+        st.plotly_chart(fig_funnel, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("###  Time in Journey by Risk Level")
+    # ─── Two-Column Layout: Journey Table + Performance Line Chart ───
+    col_journey_table, col_journey_chart = st.columns(2)
+
+    with col_journey_table:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Current Journeys")
+            st.markdown("View All", unsafe_allow_html=True)
+            journey_perf = pd.DataFrame({
+                "Journey": ["Default Prevention", "Promise to Pay Reinforcement", "Hardship Assistance"],
+                "Count": [7130, 4950, 2370]
+            })
+            st.dataframe(journey_perf.rename(columns={"Journey": "", "Count": ""}), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    with col_journey_chart:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Journey Performance")
+            line_data = pd.DataFrame({
+                "Month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+                "Success Rate": [68, 69, 70, 71, 72, 73, 74],
+                "Rraterie": [48, 49, 50, 50, 51, 52, 53],
+                "Drop-off Rate": [28, 27, 26, 25, 24, 23, 22]
+            })
+            fig_line = go.Figure()
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
+            fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
+            fig_line.update_layout(title=None, height=250, margin=dict(l=10, r=10, t=20, b=10))
+            st.plotly_chart(fig_line, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Time in Journey by Risk Level ───
+    st.markdown("### Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [2.5, 4.2, 6.7]
     })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
+    fig_time = px.bar(
+        risk_journey_time,
+        x="Risk Level",
+        y="Avg Days in Journey",
+        color="Risk Level",
+        title="Average Time in Journey",
+        color_discrete_sequence=flowen_colors
+    )
     st.plotly_chart(fig_time, use_container_width=True)
 
-    st.markdown("###  Stuck Accounts Alert")
+    # ─── Stuck Accounts Alert ───
+    st.markdown("### Stuck Accounts Alert")
     stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
     st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
     st.dataframe(
@@ -319,7 +385,8 @@ elif menu == "Journey Management":
         use_container_width=True
     )
 
-    st.markdown("###  AI Journey Recommendation (Sample)")
+    # ─── AI Journey Recommendation ───
+    st.markdown("### AI Journey Recommendation (Sample)")
     rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
     rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
         "Low": "LINE Reminder A",
@@ -336,7 +403,6 @@ elif menu == "Journey Management":
         }),
         use_container_width=True
     )
-
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
     st.title(" Recovery KPI Dashboard")
