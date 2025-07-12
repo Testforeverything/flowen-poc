@@ -270,6 +270,7 @@ if menu == "Risk Overview":
             st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
+
 # ---- Journey Management 1 ----
 def styled_table(df, highlight_col=None):
     def color_score(val):
@@ -318,7 +319,7 @@ def styled_table(df, highlight_col=None):
 
 # --- Journey Management ---
 
-elif menu == "Journey Management":
+if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
 
