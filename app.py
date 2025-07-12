@@ -218,8 +218,8 @@ if menu == "Risk Overview":
                 color_discrete_sequence=flowen_colors
             )
             fig_loan.update_traces(textinfo='label+percent' ,
-    textposition='inside',
-    textfont_size=10)
+    textposition='outside',
+    textfont_size=7)
             st.plotly_chart(fig_loan, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
