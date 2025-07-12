@@ -275,13 +275,19 @@ if menu == "Risk Overview":
 elif menu == "Journey Management":
     st.title(" Journey Management Dashboard")
 
+    # Load real data
+    total_customers = len(df)
+    engaged_customers = df[df["response_behavior"] != "Ignored"].shape[0]
+    engagement_rate = round((engaged_customers / total_customers) * 100, 1)
+    active_journeys = df[df["contact_channel"] != "None"].shape[0]
+
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
         metrics = [
-            ("Total Customers", "21,500"),
-            ("Engagement Rate", "70%"),
-            ("Active Journeys", "14,450")
+            ("Total Customers", f"{total_customers:,}"),
+            ("Engagement Rate", f"{engagement_rate}%"),
+            ("Active Journeys", f"{active_journeys:,}")
         ]
         for col, (label, value) in zip(cols, metrics):
             with col:
@@ -298,7 +304,12 @@ elif menu == "Journey Management":
             st.markdown("### Customer Funnel")
             funnel_data = pd.DataFrame({
                 "Stage": ["Uncontacted", "Contacted", "Promise to Pay", "Paid"],
-                "Count": [0, 332, 327, 32]
+                "Count": [
+                    df[df["contact_channel"] == "None"].shape[0],
+                    df[df["contact_channel"] != "None"].shape[0],
+                    df[df["response_behavior"] == "Responsive"].shape[0],
+                    df[df["last_payment_days_ago"] < 30].shape[0]
+                ]
             })
             fig_funnel = px.bar(
                 funnel_data,
@@ -359,23 +370,21 @@ elif menu == "Journey Management":
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
-        journey_perf = pd.DataFrame({
-            "Journey Type": [
-                "Default Prevention",
-                "Promise to Pay Reinforcement",
-                "Hardship Assistance"
-            ],
-            "Total": [0, 968, 26]
-        })
+        if "journey_type" in df.columns:
+            journey_perf = df["journey_type"].value_counts().reset_index()
+            journey_perf.columns = ["Journey Type", "Total"]
+        else:
+            journey_perf = pd.DataFrame({
+                "Journey Type": ["Default Prevention", "Promise to Pay Reinforcement", "Hardship Assistance"],
+                "Total": [0, df[df["response_behavior"] == "Responsive"].shape[0], df[df["risk_level"] == "High"].shape[0]]
+            })
         st.markdown(styled_table(journey_perf), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
     st.markdown("### Time in Journey by Risk Level")
-    risk_journey_time = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [2.5, 4.2, 6.7]
-    })
+    risk_journey_time = df.groupby("risk_level")["dpd"].mean().reset_index()
+    risk_journey_time.columns = ["Risk Level", "Avg Days in Journey"]
     fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
     st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
 
@@ -413,7 +422,6 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
-
 
 # --- Recovery KPI ---
 elif menu == "Recovery KPI":
