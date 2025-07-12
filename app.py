@@ -272,6 +272,11 @@ if menu == "Risk Overview":
             st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Journey Management ---
+
+# Add payment_status column based on dpd
+if "payment_status" not in df.columns:
+    df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
+
 elif menu == "Journey Management":
     st.title(" Journey Management Dashboard")
 
@@ -305,8 +310,8 @@ elif menu == "Journey Management":
                 "Count": [
                     df[df["response_behavior"] == "Silent"].shape[0],
                     df[df["response_behavior"].isin(["Responsive", "Slow", "Ignored"])].shape[0],
-                    df[df["status_paid"] == "Promise to Pay"].shape[0],
-                    df[df["status_paid"] == "Paid"].shape[0],
+                    df[df["payment_status"] == "Promise to Pay"].shape[0],
+                    df[df["payment_status"] == "Paid"].shape[0],
                 ]
             })
             fig_funnel = px.bar(
@@ -338,73 +343,6 @@ elif menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Region-Based Journey Suggestions ───
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Recommended Journey by Region")
-        region_suggestion = pd.DataFrame({
-            "Region": ["Bangkok", "Central", "North", "Northeast", "South"],
-            "Top Behavior": [
-                "Ignored", "Ignored", "Slow", "Responsive", "Ignored"
-            ],
-            "Suggested Journey": [
-                "Voice Bot Escalation",
-                "Voice Reminder + Line Backup",
-                "Gentle Reminder Script",
-                "LINE Follow-Up",
-                "Aggressive Voice Reminder"
-            ]
-        })
-        st.markdown(styled_table(region_suggestion), unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ─── Time in Journey by Risk Level ───
-    st.markdown("### Time in Journey by Risk Level")
-    risk_journey_time = pd.DataFrame({
-        "Risk Level": ["Low", "Medium", "High"],
-        "Avg Days in Journey": [
-            df[df["risk_level"] == "Low"]["dpd"].mean(),
-            df[df["risk_level"] == "Medium"]["dpd"].mean(),
-            df[df["risk_level"] == "High"]["dpd"].mean()
-        ]
-    })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
-
-    # ─── Stuck Accounts Alert ───
-    st.markdown("### Stuck Accounts Alert")
-    stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
-    st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
-    if not stuck_accounts.empty:
-        styled_df = stuck_accounts[[
-            "account_id", "name", "dpd", "risk_level",
-            "last_payment_days_ago", "contact_channel"
-        ]].rename(columns={
-            "account_id": "Account ID",
-            "name": "Name",
-            "dpd": "Days Past Due",
-            "risk_level": "Risk Level",
-            "last_payment_days_ago": "Last Payment (Days Ago)",
-            "contact_channel": "Contact Channel"
-        })
-        st.markdown(styled_table(styled_df), unsafe_allow_html=True)
-
-    # ─── AI Journey Recommendation ───
-    st.markdown("### AI Journey Recommendation (Sample)")
-    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
-    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
-        "Low": "LINE Reminder A",
-        "Medium": "LINE Reminder B",
-        "High": "Voice Prompt"
-    })
-    styled_rec = rec_sample.rename(columns={
-        "account_id": "Account ID",
-        "name": "Name",
-        "risk_level": "Risk Level",
-        "response_behavior": "Behavior",
-        "AI Recommended Journey": "AI Recommended Journey"
-    })
-    st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
 
 
 
