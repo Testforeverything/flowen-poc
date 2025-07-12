@@ -271,19 +271,18 @@ if menu == "Risk Overview":
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- Journey Management ---
 elif menu == "Journey Management":
     st.title(" Journey Management Dashboard")
 
     # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
-        metrics = [
-            ("Total Customers", "21,500"),
-            ("Engagement Rate", "70%"),
-            ("Active Journeys", "14,450")
+        kpis = [
+            ("Total Customers", "1,000"),
+            ("Engagement Rate", "64.9%"),
+            ("Active Journeys", "649")
         ]
-        for col, (label, value) in zip(cols, metrics):
+        for col, (label, value) in zip(cols, kpis):
             with col:
                 st.markdown("<div class='stCard'>", unsafe_allow_html=True)
                 st.metric(label, value)
@@ -307,11 +306,11 @@ elif menu == "Journey Management":
                 text="Count",
                 color_discrete_sequence=["#0B5394"]
             )
+            fig_funnel.update_traces(textposition="outside")
             fig_funnel.update_layout(
                 margin=dict(l=10, r=10, t=30, b=10)
             )
-            fig_funnel.update_traces(textposition="outside")
-            st.plotly_chart(fig_funnel, use_container_width=True)
+            st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col_perf:
@@ -328,9 +327,7 @@ elif menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-            st.plotly_chart(fig_line, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            st.plotly_chart(fig_line, use_container_width=True)
+            st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Current Journeys (Full Width) ───
@@ -348,31 +345,21 @@ elif menu == "Journey Management":
         st.dataframe(journey_perf, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Journey Performance")
-        line_data = pd.DataFrame({
-            "Month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
-            "Success Rate": [68, 69, 70, 71, 72, 73, 74],
-            "Rraterie": [48, 49, 50, 50, 51, 52, 53],
-            "Drop-off Rate": [28, 27, 26, 25, 24, 23, 22]
-        })
-        fig_line = go.Figure()
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
-        fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
-        fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-        st.plotly_chart(fig_line, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
     # ─── Time in Journey by Risk Level ───
     st.markdown("### Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [2.5, 4.2, 6.7]
     })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_time, use_container_width=True)
+    fig_time = px.bar(
+        risk_journey_time,
+        x="Risk Level",
+        y="Avg Days in Journey",
+        color="Risk Level",
+        title="Average Time in Journey",
+        color_discrete_sequence=flowen_colors
+    )
+    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
 
     # ─── Stuck Accounts Alert ───
     st.markdown("### Stuck Accounts Alert")
