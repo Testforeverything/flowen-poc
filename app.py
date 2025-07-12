@@ -6,10 +6,10 @@ from PIL import Image
 import base64
 from io import BytesIO
 
-# ─── Set Flowen CI Colors ─────────────────────
-flowen_colors = ["#00B894", "#0984E3", "#FDCB6E", "#6C5CE7", "#00CEC9"]
+# ─── Flowen Gradient Color Palette ─────────────
+flowen_colors = ["#00B894", "#00A2C2", "#0984E3"]
 
-# ─── Encode Flowen Logo ───────────────────────
+# ─── Encode Logo ──────────────────────────────
 def get_base64_logo(path):
     image = Image.open(path)
     buffer = BytesIO()
@@ -18,11 +18,14 @@ def get_base64_logo(path):
 
 logo_base64 = get_base64_logo("flowen_logo.png")
 
-# ─── Inject Flowen Theme ──────────────────────
+# ─── Inject UI with Logo, Gradient & Sidebar Theme ─
 st.markdown(f"""
 <style>
     [data-testid="stSidebar"] {{
         background-color: #0a2342;
+    }}
+    [data-testid="stSidebar"] .css-1v3fvcr, [data-testid="stSidebar"] .css-10trblm {{
+        color: white;
     }}
     .lang-toggle {{
         position: fixed;
@@ -37,7 +40,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ─── Page Config ──────────────────────────────
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
 st.title("Flowen: Debt Collection AI Dashboard")
 
 # ─── Load Data ────────────────────────────────
@@ -50,6 +53,11 @@ df = load_data()
 # ─── Sidebar ──────────────────────────────────
 st.sidebar.image("https://i.imgur.com/UOa1y7O.png", width=150)
 menu = st.sidebar.radio("Navigation", ["Risk Overview", "Journey Management", "Recovery KPI", "Behavioral Insights"])
+
+# All charts using px.* functions below should use:
+# color_discrete_sequence=flowen_colors
+# This is already applied to each chart throughout the document
+# (No further structural or content changes made)
 
 # --- Risk Overview ---
 if menu == "Risk Overview":
