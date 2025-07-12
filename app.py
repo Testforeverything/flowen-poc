@@ -21,6 +21,24 @@ logo_base64 = get_base64_logo("flowen_logo.png")
 
 # ─── Page Config ──────────────────────────────
 st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
+st.markdown("""
+    <style>
+        body {
+            background-color: #0B2A5B;
+        }
+        .main .block-container {
+            background-color: #0B2A5B !important;
+            color: white;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #0B2A5B;
+        }
+        [data-testid="stSidebar"] * {
+            color: white !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Flowen: Debt Collection AI Dashboard")
 
 # ─── Load Data ────────────────────────────────
@@ -72,6 +90,7 @@ with st.sidebar:
 
 # ใช้ selected เป็น menu control
 menu = selected
+
 
 
 # All charts using px.* functions below should use:
