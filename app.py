@@ -275,10 +275,30 @@ if menu == "Risk Overview":
 # --- Journey Management 1 ---
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import numpy as np   # ✅ ต้องมีบรรทัดนี้
+import numpy as np
 
+# Load Data
+df = pd.read_csv("flowen_mock_data_1000.csv")
+
+# Create Derived Fields
+df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else "In Progress" if x < 30 else "Stuck")
+if "journey_type" not in df.columns:
+    def map_journey(row):
+        if row["risk_level"] == "High":
+            return "Hardship Assistance"
+        elif row["contact_channel"] == "LINE":
+            return "Default Prevention"
+        elif row["contact_channel"] == "Call":
+            return "Promise to Pay Reinforcement"
+        else:
+            return "General Follow-up"
+    df["journey_type"] = df.apply(map_journey, axis=1)
+
+if "ai_confidence" not in df.columns:
+    np.random.seed(42)
+    df["ai_confidence"] = (df["ai_risk_score"] * 100).clip(0, 100)
+
+# Table Style
 def styled_table(df):
     return f"""
     <style>
@@ -307,6 +327,10 @@ def styled_table(df):
     {df.to_html(classes='custom-table', index=False, escape=False)}
     """
 
+st.set_page_config(page_title="Flowen: Journey Management", layout="wide")
+st.title("Journey Management Dashboard")
+
+# ---- Journey Management ------
 if menu == "Journey Management":
     df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("In Progress" if x < 30 else "Stuck"))
 
@@ -372,14 +396,11 @@ if menu == "Journey Management":
         fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
         st.plotly_chart(fig_line, use_container_width=True)
 
-    # Current Journeys
-    st.markdown("### Current Journeys")
-    if "journey_type" in df.columns:
-        journey_perf = df["journey_type"].value_counts().reset_index()
-        journey_perf.columns = ["Journey Type", "Total"]
-        st.markdown(styled_table(journey_perf), unsafe_allow_html=True)
-    else:
-        st.markdown("<p>No journey type data available.</p>", unsafe_allow_html=True)
+   # --- Current Journeys ---
+st.markdown("### Current Journeys")
+journey_summary = df["journey_type"].value_counts().reset_index()
+journey_summary.columns = ["Journey Type", "Total Customers"]
+st.markdown(styled_table(journey_summary), unsafe_allow_html=True)
 
     # Time in Journey by Risk Level
     st.markdown("### Time in Journey by Risk Level")
@@ -403,29 +424,29 @@ if menu == "Journey Management":
     else:
         st.markdown("<p>No overdue accounts found.</p>", unsafe_allow_html=True)
 
-    # AI Journey Suggestion
-    st.markdown("### AI Journey Recommendation (Sample)")
-    rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior", "ai_confidence"]].copy()
-    rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({"Low": "LINE Reminder A", "Medium": "LINE Reminder B", "High": "Voice Prompt"})
-    rec_sample = rec_sample.rename(columns={
-        "account_id": "Account ID", "name": "Name", "risk_level": "Risk Level",
-        "response_behavior": "Behavior", "ai_confidence": "Confidence (%)"
-    })
-    st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
+# --- AI Journey Recommendation (Sample) ---
+st.markdown("### AI Journey Recommendation (Sample)")
+rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior", "ai_confidence"]].copy()
+rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
+    "Low": "LINE Reminder A",
+    "Medium": "LINE Reminder B",
+    "High": "Voice Prompt"
+})
+rec_sample = rec_sample.rename(columns={
+    "account_id": "Account ID",
+    "name": "Name",
+    "risk_level": "Risk Level",
+    "response_behavior": "Behavior",
+    "ai_confidence": "Confidence (%)"
+})
+st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
 
-    # Conversion Rate
-    st.markdown("### 🔍 Conversion Rate by Journey Type")
-    if "journey_type" in df.columns and "status_paid" in df.columns:
-        conv = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0)*100
-        conv = conv.round(1).reset_index()
-        st.markdown(styled_table(conv), unsafe_allow_html=True)
 
-    # Avg. Time to Success
-    st.markdown("### ⏱️ Avg. Time to Success by Journey")
-    if "journey_type" in df.columns and "dpd" in df.columns:
-        avg_days = df[df["status_paid"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
-        fig_avg = px.bar(avg_days, x="journey_type", y="dpd", title="Avg. Days to Pay by Journey", color_discrete_sequence=["#0B5394"])
-        st.plotly_chart(fig_avg, use_container_width=True)
+# --- Conversion Rate by Journey Type ---
+st.markdown("### 🔍 Conversion Rate by Journey Type (%)")
+conversion = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0) * 100
+conversion = conversion.round(1).reset_index()
+st.markdown(styled_table(conversion), unsafe_allow_html=True)
 
     # Confidence Histogram
     st.markdown("### 📊 Journey Confidence Score Distribution")
