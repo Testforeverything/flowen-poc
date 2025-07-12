@@ -320,13 +320,8 @@ def styled_table(df, highlight_col=None):
 # --- Journey Management ---
 if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
-
     if "journey_type" not in df.columns:
-        df["journey_type"] = df["risk_level"].map({
-            "Low": "Default Prevention",
-            "Medium": "Promise to Pay Reinforcement",
-            "High": "Hardship Assistance"
-        })
+        df["journey_type"] = df["risk_level"].map({"Low": "Reminder A", "Medium": "Reminder B", "High": "Voice Prompt"})
 
     st.title(" Journey Management Dashboard")
 
@@ -383,43 +378,14 @@ if menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("### 🔍 Conversion Rate by Journey Type")
-    if "journey_type" in df.columns and "payment_status" in df.columns:
-        conv_rate = df.groupby("journey_type")["payment_status"].value_counts(normalize=True).unstack().fillna(0)*100
-        st.dataframe(conv_rate, use_container_width=True)
-
-    st.markdown("### 🌍 Journey Effectiveness by Region")
-    if "region" in df.columns:
-        heatmap_data = df.groupby(["region", "journey_type"]).size().unstack().fillna(0)
-        st.dataframe(heatmap_data, use_container_width=True)
-
-    st.markdown("### ⏱️ Avg. Time to Success by Journey")
-    if "dpd" in df.columns:
-        journey_days = df[df["payment_status"] == "Paid"].groupby("journey_type")["dpd"].mean().reset_index()
-        fig_time = px.bar(journey_days, x="journey_type", y="dpd", title="Avg. Days to Pay by Journey")
-        st.plotly_chart(fig_time, use_container_width=True)
-
-    st.markdown("### 🔁 Drop-off Analysis (Simulated)")
-    drop_off = pd.DataFrame({
-        "Step": ["Message 1", "Message 2", "Message 3", "Payment"],
-        "Drop Rate": [100, 72, 42, 20]
-    })
-    fig_drop = px.line(drop_off, x="Step", y="Drop Rate", markers=True, title="Drop-off per Touchpoint")
-    st.plotly_chart(fig_drop, use_container_width=True)
-
     st.markdown("### 📊 Journey Confidence Score Distribution")
-    if "ai_confidence" in df.columns:
-        fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score")
-        st.plotly_chart(fig_conf, use_container_width=True)
+    if "ai_confidence" not in df.columns:
+        import numpy as np
+        df["ai_confidence"] = df["risk_score"] / 100 + np.random.normal(0, 0.05, size=len(df))
+    fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0984E3"])
+    st.plotly_chart(fig_conf, use_container_width=True)
 
-    st.markdown("### 🧠 Journey Status Summary")
-    if "payment_status" in df.columns:
-        donut = df["payment_status"].value_counts().reset_index()
-        donut.columns = ["Status", "Count"]
-        fig_donut = px.pie(donut, names="Status", values="Count", hole=0.4)
-        st.plotly_chart(fig_donut, use_container_width=True)
-
-    st.success("✅ Dashboard insights updated for better journey performance analysis.")
+    st.success("✅ Journey Management updated with confidence insights.")
 
 
 
