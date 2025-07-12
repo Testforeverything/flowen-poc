@@ -271,51 +271,6 @@ if menu == "Risk Overview":
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
 
-def styled_table(df, highlight_col=None):
-    def color_score(val):
-        colors = {
-            "EXCELLENT": "green",
-            "GOOD": "dodgerblue",
-            "FAIR": "orange",
-            "POOR": "red"
-        }
-        return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
-
-    if highlight_col:
-        df = df.copy()
-        df[highlight_col] = df[highlight_col].apply(color_score)
-
-    return f"""
-    <style>
-    .custom-table {{
-        border-collapse: collapse;
-        width: 100%;
-        font-size: 14px;
-        font-family: 'Arial', sans-serif;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }}
-    .custom-table thead {{
-        background-color: #EDF0FB;
-        color: #222;
-        text-align: left;
-    }}
-    .custom-table th, .custom-table td {{
-        padding: 12px 16px;
-        border-bottom: 1px solid #ddd;
-    }}
-    .custom-table tbody tr:nth-child(even) {{
-        background-color: #F8FBFF;
-    }}
-    .custom-table tbody tr:nth-child(odd) {{
-        background-color: #ffffff;
-    }}
-    </style>
-    {df.to_html(classes='custom-table', escape=False, index=False)}
-    """
-
-
 # --- Journey Management ---
 
 def styled_table(df, highlight_col=None):
@@ -363,11 +318,101 @@ def styled_table(df, highlight_col=None):
     """
 
 
-elif menu == "Journey Management":
+# --- Journey Management --- 1
+
+def styled_table(df, highlight_col=None):
+    def color_score(val):
+        colors = {
+            "EXCELLENT": "green",
+            "GOOD": "dodgerblue",
+            "FAIR": "orange",
+            "POOR": "red"
+        }
+        return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
+
+    if highlight_col:
+        df = df.copy()
+        df[highlight_col] = df[highlight_col].apply(color_score)
+
+    return f"""
+    <style>
+    .custom-table {{
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+        font-family: 'Arial', sans-serif;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }}
+    .custom-table thead {{
+        background-color: #EDF0FB;
+        color: #222;
+        text-align: left;
+    }}
+    .custom-table th, .custom-table td {{
+        padding: 12px 16px;
+        border-bottom: 1px solid #ddd;
+    }}
+    .custom-table tbody tr:nth-child(even) {{
+        background-color: #F8FBFF;
+    }}
+    .custom-table tbody tr:nth-child(odd) {{
+        background-color: #ffffff;
+    }}
+    </style>
+    {df.to_html(classes='custom-table', escape=False, index=False)}
+    """
+
+def styled_table(df, highlight_col=None):
+    def color_score(val):
+        colors = {
+            "EXCELLENT": "green",
+            "GOOD": "dodgerblue",
+            "FAIR": "orange",
+            "POOR": "red"
+        }
+        return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
+
+    if highlight_col:
+        df = df.copy()
+        df[highlight_col] = df[highlight_col].apply(color_score)
+
+    return f"""
+    <style>
+    .custom-table {{
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+        font-family: 'Arial', sans-serif;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }}
+    .custom-table thead {{
+        background-color: #EDF0FB;
+        color: #222;
+        text-align: left;
+    }}
+    .custom-table th, .custom-table td {{
+        padding: 12px 16px;
+        border-bottom: 1px solid #ddd;
+    }}
+    .custom-table tbody tr:nth-child(even) {{
+        background-color: #F8FBFF;
+    }}
+    .custom-table tbody tr:nth-child(odd) {{
+        background-color: #ffffff;
+    }}
+    </style>
+    {df.to_html(classes='custom-table', escape=False, index=False)}
+    """
+
+# Place this code inside your main app after data is loaded and menu is selected
+if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
 
-    # ─── Top 3 KPI Cards ───
     with st.container():
         cols = st.columns(3)
         total_customers = len(df)
@@ -385,7 +430,6 @@ elif menu == "Journey Management":
                 st.metric(label, value)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Customer Funnel + Journey Performance ───
     with st.container():
         col_funnel, col_perf = st.columns([1, 1])
 
@@ -401,13 +445,7 @@ elif menu == "Journey Management":
                     df[df["payment_status"] == "Paid"].shape[0],
                 ]
             })
-            fig_funnel = px.bar(
-                funnel_data,
-                x="Stage",
-                y="Count",
-                text="Count",
-                color_discrete_sequence=["#0B5394"]
-            )
+            fig_funnel = px.bar(funnel_data, x="Stage", y="Count", text="Count", color_discrete_sequence=["#0B5394"])
             fig_funnel.update_layout(margin=dict(l=10, r=10, t=30, b=10))
             fig_funnel.update_traces(textposition="outside")
             st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
@@ -430,7 +468,6 @@ elif menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Current Journeys (Full Width) ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
@@ -445,7 +482,6 @@ elif menu == "Journey Management":
         st.markdown(styled_table(journey_perf, highlight_col="Status"), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Time in Journey by Risk Level ───
     st.markdown("### Time in Journey by Risk Level")
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
@@ -458,7 +494,6 @@ elif menu == "Journey Management":
     fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
     st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
 
-    # ─── Stuck Accounts Alert ───
     st.markdown("### Stuck Accounts Alert")
     stuck_accounts = df[df["dpd"] > 30].sort_values("last_payment_days_ago", ascending=False).head(5)
     st.warning(f"⚠ {stuck_accounts.shape[0]} accounts have not responded in over 30 days.")
@@ -476,7 +511,6 @@ elif menu == "Journey Management":
         })
         st.markdown(styled_table(styled_df), unsafe_allow_html=True)
 
-    # ─── AI Journey Recommendation ───
     st.markdown("### AI Journey Recommendation (Sample)")
     rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior"]].copy()
     rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
@@ -492,6 +526,7 @@ elif menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+
 
 
 
