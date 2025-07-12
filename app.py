@@ -383,7 +383,7 @@ if menu == "Journey Management":
 
    # ─── Current Journeys (Full Width) ───
 
-with st.container():
+# with st.container():
 
 st.markdown("<div class='stCard'>", unsafe_allow_html=True)
 
