@@ -407,7 +407,10 @@ else:
     st.markdown("<p>No overdue accounts found.</p>", unsafe_allow_html=True)
 
 # --- AI Journey Recommendation (Sample) ---
+
 import streamlit.components.v1 as components
+
+components.html(styled_table(rec_sample), height=400, scrolling=True)
 st.markdown("### AI Journey Recommendation (Sample)")
 rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior", "ai_confidence"]].copy()
 rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
