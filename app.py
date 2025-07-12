@@ -329,7 +329,7 @@ elif menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
             fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_line, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True))
+            st.markdown("</div>", unsafe_allow_html=True)
             st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
