@@ -436,10 +436,20 @@ components.html(styled_html, height=400, scrolling=True)
 
 # --- Conversion Rate by Journey Type ---
 import streamlit.components.v1 as components
+
+# --- Conversion Rate by Journey Type ---
 st.markdown("### 🔍 Conversion Rate by Journey Type (%)")
+
+# สร้างตารางจากข้อมูลจริง
 conversion = df.groupby("journey_type")["status_paid"].value_counts(normalize=True).unstack().fillna(0) * 100
 conversion = conversion.round(1).reset_index()
-st.markdown(styled_table(conversion), unsafe_allow_html=True)
+
+# ใช้ styled_table เพื่อ render เป็น HTML
+styled_html = styled_table(conversion)
+
+# แสดง HTML table สวยงามด้วย components.html
+components.html(styled_html, height=400, scrolling=True)
+
 
 # --- Confidence Histogram ---
 st.markdown("### 📊 Journey Confidence Score Distribution")
