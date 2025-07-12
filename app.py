@@ -410,8 +410,10 @@ else:
 
 import streamlit.components.v1 as components
 
-components.html(styled_table(rec_sample), height=400, scrolling=True)
+# --- AI Journey Recommendation (Sample) ---
 st.markdown("### AI Journey Recommendation (Sample)")
+
+# สุ่ม 5 ตัวอย่างจากข้อมูลจริง
 rec_sample = df.sample(5)[["account_id", "name", "risk_level", "response_behavior", "ai_confidence"]].copy()
 rec_sample["AI Recommended Journey"] = rec_sample["risk_level"].map({
     "Low": "LINE Reminder A",
@@ -425,7 +427,12 @@ rec_sample = rec_sample.rename(columns={
     "response_behavior": "Behavior",
     "ai_confidence": "Confidence (%)"
 })
-st.markdown(styled_table(rec_sample), unsafe_allow_html=True)
+
+# ใช้ styled_table เพื่อสร้าง HTML table ที่สวยงาม
+styled_html = styled_table(rec_sample)
+
+# แสดงผลผ่าน components.html เพื่อให้ render สวยงามจริง
+components.html(styled_html, height=400, scrolling=True)
 
 # --- Conversion Rate by Journey Type ---
 import streamlit.components.v1 as components
