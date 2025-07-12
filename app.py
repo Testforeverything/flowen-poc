@@ -385,7 +385,7 @@ if menu == "Journey Management":
             st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Current Journeys (Full Width) ───
+   # ─── Current Journeys (Full Width) ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### Current Journeys")
@@ -397,7 +397,8 @@ if menu == "Journey Management":
             ],
             "Status": ["GOOD", "EXCELLENT", "FAIR"]
         })
-        st.markdown(styled_table(journey_perf, highlight_col="Status"), unsafe_allow_html=True)
+        styled_html = styled_table(journey_perf, highlight_col="Status")
+        st.markdown(styled_html, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Time in Journey by Risk Level ───
