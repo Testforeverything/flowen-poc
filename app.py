@@ -182,65 +182,64 @@ if menu == "Risk Overview":
         st.info("AI last retrained: **2 hours ago**  \nTop new feature: **Contact Channel**  \nNext model update in: **22 hours**")
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ─── 3-Column Layout: Segmentation + Loan Type + Payment Delay ───
-col1, col2, col3 = st.columns(3)
+    # ─── 3-Column Layout: Segmentation + Loan Type + Payment Delay ───
+    col1, col2, col3 = st.columns(3)
 
-with col1:
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Debtor Segment Overview")
-        segment_data = df["response_behavior"].value_counts().reset_index()
-        segment_data.columns = ["Segment", "Count"]
-        fig_segment = px.pie(
-            segment_data,
-            names="Segment",
-            values="Count",
-            hole=0.4,
-            title="Behavior-Based Segmentation",
-            color_discrete_sequence=flowen_colors
-        )
-        fig_segment.update_traces(textinfo='label+percent')
-        st.plotly_chart(fig_segment, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with col1:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Debtor Segment Overview")
+            segment_data = df["response_behavior"].value_counts().reset_index()
+            segment_data.columns = ["Segment", "Count"]
+            fig_segment = px.pie(
+                segment_data,
+                names="Segment",
+                values="Count",
+                hole=0.4,
+                title="Behavior-Based Segmentation",
+                color_discrete_sequence=flowen_colors
+            )
+            fig_segment.update_traces(textinfo='label+percent')
+            st.plotly_chart(fig_segment, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-with col2:
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Loan Type Distribution")
-        loan_dist = df["loan_type"].value_counts().reset_index()
-        loan_dist.columns = ["Loan Type", "Count"]
-        fig_loan = px.pie(
-            loan_dist,
-            names="Loan Type",
-            values="Count",
-            hole=0.4,
-            title="Loan Type Breakdown",
-            color_discrete_sequence=flowen_colors
-        )
-        fig_loan.update_traces(textinfo='label+percent')
-        st.plotly_chart(fig_loan, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with col2:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Loan Type Distribution")
+            loan_dist = df["loan_type"].value_counts().reset_index()
+            loan_dist.columns = ["Loan Type", "Count"]
+            fig_loan = px.pie(
+                loan_dist,
+                names="Loan Type",
+                values="Count",
+                hole=0.4,
+                title="Loan Type Breakdown",
+                color_discrete_sequence=flowen_colors
+            )
+            fig_loan.update_traces(textinfo='label+percent')
+            st.plotly_chart(fig_loan, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-with col3:
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Payment Delay by Age Group")
-        df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100],
-                                 labels=["<25", "26–35", "36–45", "45+"])
-        age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
-        fig_age = px.bar(
-            age_dpd,
-            x="age_group",
-            y="dpd",
-            title="Average Days Past Due by Age Group",
-            labels={"dpd": "Avg DPD", "age_group": "Age Group"},
-            color_discrete_sequence=flowen_colors
-        )
-        st.plotly_chart(fig_age, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with col3:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Payment Delay by Age Group")
+            df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100],
+                                     labels=["<25", "26–35", "36–45", "45+"])
+            age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
+            fig_age = px.bar(
+                age_dpd,
+                x="age_group",
+                y="dpd",
+                title="Average Days Past Due by Age Group",
+                labels={"dpd": "Avg DPD", "age_group": "Age Group"},
+                color_discrete_sequence=flowen_colors
+            )
+            st.plotly_chart(fig_age, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Debtor Summary & Profile ───
-    
     col_summary, col_profile = st.columns([2, 1])
 
     with col_summary:
@@ -269,6 +268,8 @@ with col3:
             st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
+
+
 
 # --- Journey Management ---
 elif menu == "Journey Management":
