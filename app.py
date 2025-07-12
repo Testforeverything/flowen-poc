@@ -283,12 +283,11 @@ def styled_table(df, highlight_col=None):
         }
         return f'<span style="color:{colors.get(val.upper(), "black")}; font-weight:bold;">{val}</span>'
 
-    if highlight_col:
-        df = df.copy()
+    df = df.copy()
+    if highlight_col and highlight_col in df.columns:
         df[highlight_col] = df[highlight_col].apply(color_score)
 
-    html_table = df.to_html(classes='custom-table', escape=False, index=False, border=0)
-    return f"""
+    html = f"""
     <style>
     .custom-table {{
         border-collapse: collapse;
@@ -315,13 +314,14 @@ def styled_table(df, highlight_col=None):
         background-color: #ffffff;
     }}
     </style>
-    {html_table}
-    """
+    """ + df.to_html(classes="custom-table", index=False, escape=False)
 
-# --- Journey Management ---
+    return html
 if menu == "Journey Management":
-    df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
+
+    # Prepare data
+    df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
 
     # ─── Top 3 KPI Cards ───
     with st.container():
@@ -364,9 +364,8 @@ if menu == "Journey Management":
                 text="Count",
                 color_discrete_sequence=["#0B5394"]
             )
-            fig_funnel.update_layout(margin=dict(l=10, r=10, t=30, b=10))
             fig_funnel.update_traces(textposition="outside")
-            st.plotly_chart(fig_funnel, use_container_width=True, key="customer_funnel_chart")
+            st.plotly_chart(fig_funnel, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col_perf:
@@ -382,8 +381,7 @@ if menu == "Journey Management":
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Success Rate"], mode="lines", name="Success Rate"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Rraterie"], mode="lines", name="Rraterie"))
             fig_line.add_trace(go.Scatter(x=line_data["Month"], y=line_data["Drop-off Rate"], mode="lines", name="Drop-off Rate"))
-            fig_line.update_layout(margin=dict(l=10, r=10, t=20, b=10))
-            st.plotly_chart(fig_line, use_container_width=True, key="journey_line_chart")
+            st.plotly_chart(fig_line, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Current Journeys (Full Width) ───
@@ -407,13 +405,20 @@ if menu == "Journey Management":
     risk_journey_time = pd.DataFrame({
         "Risk Level": ["Low", "Medium", "High"],
         "Avg Days in Journey": [
-            df[df["risk_level"] == "Low"]["dpd"].mean(),
-            df[df["risk_level"] == "Medium"]["dpd"].mean(),
-            df[df["risk_level"] == "High"]["dpd"].mean()
+            round(df[df["risk_level"] == "Low"]["dpd"].mean(), 1),
+            round(df[df["risk_level"] == "Medium"]["dpd"].mean(), 1),
+            round(df[df["risk_level"] == "High"]["dpd"].mean(), 1)
         ]
     })
-    fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", title="Average Time in Journey", color_discrete_sequence=flowen_colors)
-    st.plotly_chart(fig_time, use_container_width=True, key="journey_risk_time")
+    fig_time = px.bar(
+        risk_journey_time,
+        x="Risk Level",
+        y="Avg Days in Journey",
+        color="Risk Level",
+        title="Average Time in Journey",
+        color_discrete_sequence=flowen_colors
+    )
+    st.plotly_chart(fig_time, use_container_width=True)
 
     # ─── Stuck Accounts Alert ───
     st.markdown("### Stuck Accounts Alert")
@@ -449,6 +454,7 @@ if menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
+
 
 
 # --- Recovery KPI ---
