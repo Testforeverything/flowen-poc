@@ -271,7 +271,8 @@ if menu == "Risk Overview":
             st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
             st.markdown("</div>", unsafe_allow_html=True)
 
-# ---- Journey Management 1 ----
+# --- Journey Management 1 ---
+
 def styled_table(df, highlight_col=None):
     def color_score(val):
         colors = {
@@ -316,9 +317,7 @@ def styled_table(df, highlight_col=None):
     {df.to_html(classes='custom-table', escape=False, index=False)}
     """
 
-
 # --- Journey Management ---
-
 if menu == "Journey Management":
     df["payment_status"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("Promise to Pay" if x < 30 else "Overdue"))
     st.title(" Journey Management Dashboard")
@@ -448,8 +447,6 @@ if menu == "Journey Management":
         "AI Recommended Journey": "AI Recommended Journey"
     })
     st.markdown(styled_table(styled_rec), unsafe_allow_html=True)
-
-
 
 
 # --- Recovery KPI ---
