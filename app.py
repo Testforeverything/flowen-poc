@@ -394,6 +394,13 @@ components.html(styled_table(journey_summary), height=300, scrolling=True)
 #st.plotly_chart(fig_time, use_container_width=True)
 
 # Time in Journey & Confidence Score (2 Columns)
+# สร้าง risk_journey_time ก่อน
+risk_journey_time = pd.DataFrame({
+    "Risk Level": ["Low", "Medium", "High"],
+    "Avg Days in Journey": [2.5, 4.2, 6.7]
+})
+
+# แล้วค่อยนำไปใช้ใน layout 2 คอลัมน์
 col1, col2 = st.columns(2)
 
 with col1:
@@ -417,6 +424,7 @@ with col2:
         color_discrete_sequence=["#0B5394"]
     )
     st.plotly_chart(fig_conf, use_container_width=True)
+
 
 # Stuck Accounts
 st.markdown("### Stuck Accounts Alert")
