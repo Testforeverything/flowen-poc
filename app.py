@@ -385,13 +385,38 @@ journey_summary.columns = ["Journey Type", "Total Customers"]
 components.html(styled_table(journey_summary), height=300, scrolling=True)
 
 # Time in Journey by Risk Level
-st.markdown("### Time in Journey by Risk Level")
-risk_journey_time = pd.DataFrame({
-    "Risk Level": ["Low", "Medium", "High"],
-    "Avg Days in Journey": [2.5, 4.2, 6.7]
-})
-fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", color_discrete_sequence=["#0984E3", "#00A2C2", "#00B894"])
-st.plotly_chart(fig_time, use_container_width=True)
+# st.markdown("### Time in Journey by Risk Level")
+# risk_journey_time = pd.DataFrame({
+ #   "Risk Level": ["Low", "Medium", "High"],
+ #   "Avg Days in Journey": [2.5, 4.2, 6.7]
+#})
+#fig_time = px.bar(risk_journey_time, x="Risk Level", y="Avg Days in Journey", color="Risk Level", color_discrete_sequence=["#0984E3", "#00A2C2", "#00B894"])
+#st.plotly_chart(fig_time, use_container_width=True)
+
+# Time in Journey & Confidence Score (2 Columns)
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("### Time in Journey by Risk Level")
+    fig_time = px.bar(
+        risk_journey_time,
+        x="Risk Level",
+        y="Avg Days in Journey",
+        color="Risk Level",
+        color_discrete_sequence=["#0984E3", "#00A2C2", "#00B894"]
+    )
+    st.plotly_chart(fig_time, use_container_width=True)
+
+with col2:
+    st.markdown("### 📊 Journey Confidence Score Distribution")
+    fig_conf = px.histogram(
+        df,
+        x="ai_confidence",
+        nbins=20,
+        title="AI Confidence Score",
+        color_discrete_sequence=["#0B5394"]
+    )
+    st.plotly_chart(fig_conf, use_container_width=True)
 
 # Stuck Accounts
 st.markdown("### Stuck Accounts Alert")
@@ -452,9 +477,9 @@ components.html(styled_html, height=300, scrolling=True)
 
 
 # --- Confidence Histogram ---
-st.markdown("### 📊 Journey Confidence Score Distribution")
-fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0B5394"])
-st.plotly_chart(fig_conf, use_container_width=True)
+#st.markdown("### 📊 Journey Confidence Score Distribution")
+#fig_conf = px.histogram(df, x="ai_confidence", nbins=20, title="AI Confidence Score", color_discrete_sequence=["#0B5394"])
+#st.plotly_chart(fig_conf, use_container_width=True)
 
 
 # --- Recovery KPI ---
