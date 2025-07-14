@@ -125,17 +125,18 @@ menu = selected
 # This is already applied to each chart throughout the document
 # (No further structural or content changes made)
 
-if menu == "Risk Overview":
+# --- Risk Overview ---
+if selected == "Risk Overview":
     st.title("Risk Overview")
 
-    # ─── Top Metrics: One Column, 4 stacked cards ───
+    # ─── Top Metrics ───
     with st.container():
         cols = st.columns(4)
         metrics = [
-            ("Accounts Contacted Today", "1,203"),
-            ("Responses Received", "645"),
-            ("Active Conversations", "53"),
-            ("Paid Within 24h", "32%")
+            ("Accounts Contacted Today", f"{df.shape[0]}"),
+            ("Responses Received", str(df[df["response_behavior"] != "Silent"].shape[0])),
+            ("Active Conversations", str(df[df["response_behavior"].isin(["Responsive", "Slow"])].shape[0])),
+            ("Paid Within 24h", "32%")  # Static placeholder
         ]
         for col, (label, value) in zip(cols, metrics):
             with col:
@@ -147,6 +148,7 @@ if menu == "Risk Overview":
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
         st.markdown("### AI Suggestion Feed")
+
         with st.expander("Top 5 Accounts Likely to Pay in 48h"):
             st.table(df.sort_values("ai_risk_score", ascending=False).head(5)[[
                 "account_id", "name", "risk_score", "loan_type", "contact_channel"
@@ -154,14 +156,16 @@ if menu == "Risk Overview":
                 "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
                 "loan_type": "Loan Type", "contact_channel": "Contact Channel"
             }))
+
         with st.expander("Accounts Ignored All Contact for 7+ Days"):
-            inactive = df[df["last_payment_days_ago"] > 30].sort_values("risk_score", ascending=False)
-            st.dataframe(inactive[[
+            ignore_df = df[df["last_payment_days_ago"] > 30]
+            st.dataframe(ignore_df.sort_values("risk_score", ascending=False)[[
                 "account_id", "name", "risk_score", "last_payment_days_ago", "region"
             ]].rename(columns={
                 "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
                 "last_payment_days_ago": "Last Payment (Days Ago)", "region": "Region"
             }).head(5), use_container_width=True)
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── Effectiveness Panel ───
@@ -183,94 +187,73 @@ if menu == "Risk Overview":
         st.info("AI last retrained: **2 hours ago**  \nTop new feature: **Contact Channel**  \nNext model update in: **22 hours**")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── 3-Column Layout: Segmentation + Loan Type + Payment Delay ───
+    # ─── Segments + Loan Type + Payment Delay ───
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        with st.container():
-            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-            st.markdown("### Debtor Segment Overview")
-            segment_data = df["response_behavior"].value_counts().reset_index()
-            segment_data.columns = ["Segment", "Count"]
-            fig_segment = px.pie(
-                segment_data,
-                names="Segment",
-                values="Count",
-                hole=0.4,
-                title="Behavior-Based Segmentation",
-                color_discrete_sequence=flowen_colors
-            )
-            fig_segment.update_traces(textinfo='label+percent')
-            st.plotly_chart(fig_segment, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Debtor Segment Overview")
+        segment_data = df["response_behavior"].value_counts().reset_index()
+        segment_data.columns = ["Segment", "Count"]
+        fig_segment = px.pie(
+            segment_data, names="Segment", values="Count", hole=0.4,
+            title="Behavior-Based Segmentation", color_discrete_sequence=flowen_colors
+        )
+        st.plotly_chart(fig_segment, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        with st.container():
-            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-            st.markdown("### Loan Type Distribution")
-            loan_dist = df["loan_type"].value_counts().reset_index()
-            loan_dist.columns = ["Loan Type", "Count"]
-            fig_loan = px.pie(
-                loan_dist,
-                names="Loan Type",
-                values="Count",
-                hole=0.0,
-                title="Loan Type Breakdown",
-                color_discrete_sequence=flowen_colors
-            )
-            fig_loan.update_traces(textinfo='label+percent' ,
-    textposition='outside',
-    textfont_size=7)
-            st.plotly_chart(fig_loan, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Loan Type Distribution")
+        loan_dist = df["loan_type"].value_counts().reset_index()
+        loan_dist.columns = ["Loan Type", "Count"]
+        fig_loan = px.pie(
+            loan_dist, names="Loan Type", values="Count", hole=0,
+            title="Loan Type Breakdown", color_discrete_sequence=flowen_colors
+        )
+        st.plotly_chart(fig_loan, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
-        with st.container():
-            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-            st.markdown("### Payment Delay by Age Group")
-            df["age_group"] = pd.cut(df["age"].astype(int), bins=[0, 25, 35, 45, 100],
-                                     labels=["<25", "26–35", "36–45", "45+"])
-            age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
-            fig_age = px.bar(
-                age_dpd,
-                x="age_group",
-                y="dpd",
-                title="Average Days Past Due by Age Group",
-                labels={"dpd": "Avg DPD", "age_group": "Age Group"},
-                color_discrete_sequence=flowen_colors
-            )
-            st.plotly_chart(fig_age, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Payment Delay by Age Group")
+        df["age_group"] = pd.cut(df["age"], bins=[0, 25, 35, 45, 100],
+                                 labels=["<25", "26–35", "36–45", "45+"])
+        age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
+        fig_age = px.bar(
+            age_dpd, x="age_group", y="dpd", title="Avg Days Past Due by Age Group",
+            labels={"dpd": "Avg DPD"}, color_discrete_sequence=flowen_colors
+        )
+        st.plotly_chart(fig_age, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Debtor Summary & Profile ───
+    # ─── Debtor Summary & Profile Viewer ───
     col_summary, col_profile = st.columns([2, 1])
 
     with col_summary:
-        with st.container():
-            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-            st.markdown("### Debtor Summary")
-            st.dataframe(df[[
-                "account_id", "name", "risk_score", "total_debt", "dpd",
-                "loan_type", "region", "risk_level"
-            ]].rename(columns={
-                "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
-                "total_debt": "Outstanding (฿)", "dpd": "Days Past Due",
-                "loan_type": "Loan Type", "region": "Region", "risk_level": "Risk Level"
-            }), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Debtor Summary")
+        st.dataframe(df[[
+            "account_id", "name", "risk_score", "total_debt", "dpd",
+            "loan_type", "region", "risk_level"
+        ]].rename(columns={
+            "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
+            "total_debt": "Outstanding (฿)", "dpd": "Days Past Due",
+            "loan_type": "Loan Type", "region": "Region", "risk_level": "Risk Level"
+        }), use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_profile:
-        with st.container():
-            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-            st.markdown("### Debtor Profile Viewer")
-            selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
-            debtor = df[df["account_id"] == selected_account].iloc[0]
-            st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
-            st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
-            st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
-            st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
-            st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### Debtor Profile Viewer")
+        selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
+        debtor = df[df["account_id"] == selected_account].iloc[0]
+        st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
+        st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
+        st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
+        st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
+        st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Journey Management 1 ---
 import streamlit as st
