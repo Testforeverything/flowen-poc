@@ -302,7 +302,7 @@ if menu == "Risk Overview":
             x="region",
             y="risk_level",
             z="Accounts",
-            color_continuous_scale=flowen_colors,
+            color_continuous_scale="YlOrBr",
             title="Concentration of Risk Levels Across Regions"
         )
         st.plotly_chart(fig_heatmap, use_container_width=True)
