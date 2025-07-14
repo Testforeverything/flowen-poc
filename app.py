@@ -6,7 +6,6 @@ from PIL import Image
 import base64
 from io import BytesIO
 from streamlit_option_menu import option_menu
-import streamlit.components.v1 as components
 
 # ─── Flowen Gradient Color Palette ─────────────
 flowen_colors = ["#00B894", "#00A2C2", "#0984E3"]
@@ -35,7 +34,6 @@ st.markdown(f"""
     .main .block-container {{
         background-color: #F6F8FA !important;
         padding: 2rem 3rem 3rem 3rem;
-        border-radius: 0;
     }}
     [data-testid="stSidebar"] {{
         background-color: #0B2A5B;
@@ -48,26 +46,7 @@ st.markdown(f"""
         padding: 1.5rem;
         border-radius: 16px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        transition: all 0.3s ease-in-out;
         margin-bottom: 1.5rem;
-    }}
-    thead tr th {{
-        background-color: #E3F2FD !important;
-        color: #0B2A5B !important;
-        font-weight: 600;
-    }}
-    tbody tr:hover {{
-        background-color: #F0F7FF !important;
-        transition: 0.2s;
-    }}
-    details > summary {{
-        font-weight: 600;
-        font-size: 15px;
-        color: #0B2A5B;
-    }}
-    .js-plotly-plot .main-svg .g-title {{
-        font-size: 18px !important;
-        fill: #0B2A5B !important;
     }}
 </style>
 <div style='padding: 10px 0 10px 10px;'>
@@ -78,11 +57,26 @@ st.markdown(f"""
 # ─── Load Data ────────────────────────────────
 @st.cache_data
 def load_data():
-    return pd.read_csv("flowen_mock_data_1000.csv")
+    df = pd.read_csv("flowen_mock_data_1000.csv")
+    df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("In Progress" if x < 30 else "Stuck"))
+    if "journey_type" not in df.columns:
+        def map_journey(row):
+            if row["risk_level"] == "High":
+                return "Hardship Assistance"
+            elif row["contact_channel"] == "LINE":
+                return "Default Prevention"
+            elif row["contact_channel"] == "Call":
+                return "Promise to Pay Reinforcement"
+            else:
+                return "General Follow-up"
+        df["journey_type"] = df.apply(map_journey, axis=1)
+    if "ai_confidence" not in df.columns:
+        df["ai_confidence"] = (df["ai_risk_score"] * 100).clip(0, 100)
+    return df
 
 df = load_data()
 
-# ─── Sidebar Layout ───────────────────────────
+# ─── Sidebar ─────────────────────────────
 with st.sidebar:
     selected = option_menu(
         menu_title="",
@@ -90,33 +84,18 @@ with st.sidebar:
             "Risk Overview",
             "Journey Management",
             "Recovery KPI",
-            "Behavioral Insights",
-            "Settings · Help"
+            "Behavioral Insights"
         ],
-        icons=[
-            "bar-chart-line",
-            "bar-chart",
-            "pie-chart",
-            "graph-up",
-            "gear"
-        ],
+        icons=["bar-chart-line", "bar-chart", "pie-chart", "graph-up"],
         default_index=0,
         styles={
             "container": {"padding": "0!important", "background-color": "#0B2A5B"},
             "icon": {"color": "white", "font-size": "18px"},
-            "nav-link": {
-                "color": "#F1F1F1",
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "0px",
-                "padding": "10px 20px",
-                "--hover-color": "#1C3A6B"
-            },
+            "nav-link": {"color": "#F1F1F1", "font-size": "16px", "--hover-color": "#1C3A6B"},
             "nav-link-selected": {"background-color": "#29C2D1", "color": "#0B2A5B", "font-weight": "bold"},
         }
     )
 
-# ใช้ selected เป็น menu control
 menu = selected
 
 
@@ -126,17 +105,17 @@ menu = selected
 # (No further structural or content changes made)
 
 # --- Risk Overview ---
-if selected == "Risk Overview":
+if menu == "Risk Overview":
     st.title("Risk Overview")
 
-    # ─── Top Metrics ───
+    # ─── Top Metrics Cards ───
     with st.container():
         cols = st.columns(4)
         metrics = [
-            ("Accounts Contacted Today", f"{df.shape[0]}"),
-            ("Responses Received", str(df[df["response_behavior"] != "Silent"].shape[0])),
-            ("Active Conversations", str(df[df["response_behavior"].isin(["Responsive", "Slow"])].shape[0])),
-            ("Paid Within 24h", "32%")  # Static placeholder
+            ("Accounts Contacted Today", f"{len(df)}"),
+            ("Responses Received", f"{df[df['response_behavior'].isin(['Responsive', 'Slow'])].shape[0]}"),
+            ("Active Conversations", f"{df[df['dpd'] > 0].shape[0]}"),
+            ("Paid Within 24h", f"{df[df['dpd'] == 0].shape[0]/len(df)*100:.1f}%")
         ]
         for col, (label, value) in zip(cols, metrics):
             with col:
@@ -147,8 +126,7 @@ if selected == "Risk Overview":
     # ─── AI Suggestion Feed ───
     with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### AI Suggestion Feed")
-
+        st.markdown("### 🤖 AI Suggestion Feed")
         with st.expander("Top 5 Accounts Likely to Pay in 48h"):
             st.table(df.sort_values("ai_risk_score", ascending=False).head(5)[[
                 "account_id", "name", "risk_score", "loan_type", "contact_channel"
@@ -156,104 +134,255 @@ if selected == "Risk Overview":
                 "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
                 "loan_type": "Loan Type", "contact_channel": "Contact Channel"
             }))
-
         with st.expander("Accounts Ignored All Contact for 7+ Days"):
-            ignore_df = df[df["last_payment_days_ago"] > 30]
-            st.dataframe(ignore_df.sort_values("risk_score", ascending=False)[[
+            ignored_df = df[(df["response_behavior"] == "Ignored") & (df["last_payment_days_ago"] > 7)]
+            st.dataframe(ignored_df[[
                 "account_id", "name", "risk_score", "last_payment_days_ago", "region"
             ]].rename(columns={
-                "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
-                "last_payment_days_ago": "Last Payment (Days Ago)", "region": "Region"
+                "account_id": "Account ID",
+                "name": "Name",
+                "risk_score": "Risk Score",
+                "last_payment_days_ago": "Last Payment (Days Ago)",
+                "region": "Region"
             }).head(5), use_container_width=True)
-
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ─── Effectiveness Panel ───
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### ⚖️ Human vs AI Effectiveness")
-        effect_data = pd.DataFrame({
-            "Method": ["AI Recommended Flow", "Manual Call", "Email Follow-up"],
-            "Success Rate (%)": [72, 51, 43],
-            "Avg Time to Payment (Days)": [2.5, 4.2, 5.1]
-        })
-        st.dataframe(effect_data)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ─── AI Learning ───
-    with st.container():
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### AI Self-Learning System")
-        st.info("AI last retrained: **2 hours ago**  \nTop new feature: **Contact Channel**  \nNext model update in: **22 hours**")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ─── Segments + Loan Type + Payment Delay ───
+    # ─── 3 Column Segmentation View ───
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Debtor Segment Overview")
-        segment_data = df["response_behavior"].value_counts().reset_index()
-        segment_data.columns = ["Segment", "Count"]
-        fig_segment = px.pie(
-            segment_data, names="Segment", values="Count", hole=0.4,
-            title="Behavior-Based Segmentation", color_discrete_sequence=flowen_colors
-        )
-        st.plotly_chart(fig_segment, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Debtor Segment Overview")
+            segment_data = df["response_behavior"].value_counts().reset_index()
+            segment_data.columns = ["Segment", "Count"]
+            fig_segment = px.pie(
+                segment_data,
+                names="Segment",
+                values="Count",
+                hole=0.4,
+                title="Behavior-Based Segmentation",
+                color_discrete_sequence=flowen_colors
+            )
+            fig_segment.update_traces(textinfo='label+percent')
+            st.plotly_chart(fig_segment, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Loan Type Distribution")
-        loan_dist = df["loan_type"].value_counts().reset_index()
-        loan_dist.columns = ["Loan Type", "Count"]
-        fig_loan = px.pie(
-            loan_dist, names="Loan Type", values="Count", hole=0,
-            title="Loan Type Breakdown", color_discrete_sequence=flowen_colors
-        )
-        st.plotly_chart(fig_loan, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Loan Type Distribution")
+            loan_dist = df["loan_type"].value_counts().reset_index()
+            loan_dist.columns = ["Loan Type", "Count"]
+            fig_loan = px.pie(
+                loan_dist,
+                names="Loan Type",
+                values="Count",
+                hole=0.0,
+                title="Loan Type Breakdown",
+                color_discrete_sequence=flowen_colors
+            )
+            fig_loan.update_traces(textinfo='label+percent', textposition='outside', textfont_size=10)
+            st.plotly_chart(fig_loan, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Payment Delay by Age Group")
-        df["age_group"] = pd.cut(df["age"], bins=[0, 25, 35, 45, 100],
-                                 labels=["<25", "26–35", "36–45", "45+"])
-        age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
-        fig_age = px.bar(
-            age_dpd, x="age_group", y="dpd", title="Avg Days Past Due by Age Group",
-            labels={"dpd": "Avg DPD"}, color_discrete_sequence=flowen_colors
-        )
-        st.plotly_chart(fig_age, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### Payment Delay by Age Group")
+            df["age_group"] = pd.cut(df["age"], bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
+            age_dpd = df.groupby("age_group")["dpd"].mean().reset_index()
+            fig_age = px.bar(
+                age_dpd,
+                x="age_group",
+                y="dpd",
+                title="Avg DPD by Age Group",
+                labels={"dpd": "Avg DPD", "age_group": "Age Group"},
+                color_discrete_sequence=flowen_colors
+            )
+            st.plotly_chart(fig_age, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
 
     # ─── Debtor Summary & Profile Viewer ───
     col_summary, col_profile = st.columns([2, 1])
 
     with col_summary:
-        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Debtor Summary")
-        st.dataframe(df[[
-            "account_id", "name", "risk_score", "total_debt", "dpd",
-            "loan_type", "region", "risk_level"
-        ]].rename(columns={
-            "account_id": "Account ID", "name": "Name", "risk_score": "Risk Score",
-            "total_debt": "Outstanding (฿)", "dpd": "Days Past Due",
-            "loan_type": "Loan Type", "region": "Region", "risk_level": "Risk Level"
-        }), use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### 📋 Debtor Summary Table")
+            st.dataframe(df[[
+                "account_id", "name", "risk_score", "total_debt", "dpd",
+                "loan_type", "region", "risk_level", "journey_type"
+            ]].rename(columns={
+                "account_id": "Account ID",
+                "name": "Name",
+                "risk_score": "Risk Score",
+                "total_debt": "Outstanding (฿)",
+                "dpd": "Days Past Due",
+                "loan_type": "Loan Type",
+                "region": "Region",
+                "risk_level": "Risk Level",
+                "journey_type": "Assigned Journey"
+            }), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with col_profile:
+        with st.container():
+            st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+            st.markdown("### 👤 Debtor Profile Viewer")
+            selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
+            debtor = df[df["account_id"] == selected_account].iloc[0]
+
+            st.markdown(f"**Name:** {debtor['name']}")
+            st.markdown(f"**Account ID:** {debtor['account_id']}")
+            st.markdown(f"**Journey Type:** {debtor['journey_type']}")
+            st.markdown(f"**Risk Score:** {debtor['risk_score']:.1f} | **Risk Level:** {debtor['risk_level']}")
+            st.markdown(f"**Outstanding Debt:** ฿{debtor['total_debt']:,}")
+            st.markdown(f"**Days Past Due (DPD):** {debtor['dpd']} days")
+            st.markdown(f"**Region:** {debtor['region']} | **Loan Type:** {debtor['loan_type']}")
+            st.markdown(f"**Response Behavior:** {debtor['response_behavior']}")
+            st.markdown(f"**Confidence Score:** {debtor['ai_confidence']:.1f}%")
+            st.markdown(f"**Last Payment Date:** {debtor['last_payment_date']}  \n**Last Contact:** {debtor.get('last_contact_date', '—')}")
+            st.markdown("</div>", unsafe_allow_html=True)
+    # ─── Risk vs Recovery Rate ───
+    with st.container():
         st.markdown("<div class='stCard'>", unsafe_allow_html=True)
-        st.markdown("### Debtor Profile Viewer")
-        selected_account = st.selectbox("Select Account ID", df["account_id"].unique())
-        debtor = df[df["account_id"] == selected_account].iloc[0]
-        st.markdown(f"**Name:** {debtor['name']}  \n**Account ID:** {debtor['account_id']}")
-        st.markdown(f"**Risk Score:** {debtor['risk_score']} | **Risk Level:** {debtor['risk_level']}")
-        st.markdown(f"**Outstanding:** ฿{debtor['total_debt']:,} | **DPD:** {debtor['dpd']} days")
-        st.markdown(f"**Loan Type:** {debtor['loan_type']} | **Region:** {debtor['region']}")
-        st.markdown(f"**Contact Channel:** {debtor['contact_channel']} | **Last Payment:** {debtor['last_payment_date']}")
+        st.markdown("### 📈 Risk Level vs Recovery Rate")
+        # สร้างตัวแปรจำลอง recovery_rate ถ้ายังไม่มี
+        if "recovered" not in df.columns:
+            import numpy as np
+            np.random.seed(42)
+            df["recovered"] = np.where(df["dpd"] == 0, 1, np.random.binomial(1, 0.6, size=len(df)))
+
+        recovery_risk = df.groupby("risk_level")["recovered"].mean().reset_index()
+        recovery_risk.columns = ["Risk Level", "Recovery Rate"]
+        recovery_risk["Recovery Rate"] = recovery_risk["Recovery Rate"] * 100
+
+        fig_risk_recovery = px.bar(
+            recovery_risk,
+            x="Risk Level",
+            y="Recovery Rate",
+            text="Recovery Rate",
+            color="Risk Level",
+            color_discrete_sequence=flowen_colors,
+            title="Recovery Rate by Risk Level"
+        )
+        fig_risk_recovery.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+        fig_risk_recovery.update_layout(yaxis_title="Recovery Rate (%)")
+        st.plotly_chart(fig_risk_recovery, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Journey Effectiveness by Segment ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 🚀 Journey Effectiveness by Segment")
+
+        journey_segment = df.groupby(["journey_type", "response_behavior"]).size().reset_index(name="Count")
+        fig_journey_seg = px.bar(
+            journey_segment,
+            x="journey_type",
+            y="Count",
+            color="response_behavior",
+            title="Journey Assignment vs Debtor Behavior",
+            barmode="group",
+            color_discrete_sequence=flowen_colors
+        )
+        fig_journey_seg.update_layout(xaxis_title="Journey Type", yaxis_title="Debtor Count")
+        st.plotly_chart(fig_journey_seg, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── AI Risk Score vs Region (Behavioral Heatmap) ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 🌏 Risk Score Heatmap by Region")
+        risk_region = df.groupby(["region", "risk_level"]).size().reset_index(name="Accounts")
+        fig_heatmap = px.density_heatmap(
+            risk_region,
+            x="region",
+            y="risk_level",
+            z="Accounts",
+            color_continuous_scale=flowen_colors,
+            title="Concentration of Risk Levels Across Regions"
+        )
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Insight Panel ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 🧠 Key Risk Insights Summary")
+
+        high_risk_count = df[df["risk_level"] == "High"].shape[0]
+        stuck_count = df[df["dpd"] > 30].shape[0]
+        responsive_rate = df[df["response_behavior"] == "Responsive"].shape[0] / len(df) * 100
+
+        st.info(f"""
+        - **{high_risk_count:,} accounts** are classified as **High Risk**
+        - **{stuck_count:,} accounts** have **DPD > 30** and may need escalated action
+        - **Responsive rate** across all accounts is **{responsive_rate:.1f}%**
+        - Highest recovery observed in **Medium Risk** group with **LINE Reminder B**
+        """)
+        st.markdown("</div>", unsafe_allow_html=True)
+    # ─── Risk-Level Summary Card ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 📌 Risk-Level Portfolio Summary")
+
+        col_r1, col_r2, col_r3 = st.columns(3)
+
+        with col_r1:
+            total_high_risk = df[df["risk_level"] == "High"].shape[0]
+            st.metric("High Risk Accounts", f"{total_high_risk:,}")
+        with col_r2:
+            total_med_risk = df[df["risk_level"] == "Medium"].shape[0]
+            st.metric("Medium Risk Accounts", f"{total_med_risk:,}")
+        with col_r3:
+            total_low_risk = df[df["risk_level"] == "Low"].shape[0]
+            st.metric("Low Risk Accounts", f"{total_low_risk:,}")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Risk Group vs Journey Strategy ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 🧭 Journey Strategy by Risk Group")
+
+        journey_risk = df.groupby(["risk_level", "journey_type"]).size().reset_index(name="Count")
+        fig_journey_risk = px.bar(
+            journey_risk,
+            x="risk_level",
+            y="Count",
+            color="journey_type",
+            barmode="stack",
+            title="Journey Allocation by Risk Group",
+            labels={"risk_level": "Risk Level", "journey_type": "Journey Type"},
+            color_discrete_sequence=flowen_colors
+        )
+        st.plotly_chart(fig_journey_risk, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ─── Risk vs Behavior Insight ───
+    with st.container():
+        st.markdown("<div class='stCard'>", unsafe_allow_html=True)
+        st.markdown("### 🧠 Behavior Pattern by Risk")
+
+        behav_risk = df.groupby(["risk_level", "response_behavior"]).size().reset_index(name="Count")
+        fig_behav = px.bar(
+            behav_risk,
+            x="risk_level",
+            y="Count",
+            color="response_behavior",
+            barmode="group",
+            title="Behavior Types by Risk Level",
+            labels={"risk_level": "Risk Level", "response_behavior": "Behavior"},
+            color_discrete_sequence=flowen_colors
+        )
+        st.plotly_chart(fig_behav, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
 
 # --- Journey Management 1 ---
 import streamlit as st
