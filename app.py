@@ -57,7 +57,7 @@ st.markdown(f"""
 # ─── Load Data ────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_csv("flowen_mock_data_1000.csv")
+    df = pd.read_csv("flowen_mock_data_5000.csv")
     df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else ("In Progress" if x < 30 else "Stuck"))
     if "journey_type" not in df.columns:
         def map_journey(row):
