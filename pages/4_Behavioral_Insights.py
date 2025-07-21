@@ -1,58 +1,79 @@
+# pages/4_Behavioral_Insights.py
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# ─── Session Setup ───
+if "lang" not in st.session_state:
+    st.session_state["lang"] = "🇬🇧 English"
+lang = st.session_state["lang"]
+
 # ─── Page Config ───
-st.set_page_config(page_title="Flowen: Behavioral Insights", layout="wide")
-st.title("🧠 Behavioral Insights")
+st.set_page_config(page_title="Behavioral Insights", layout="wide")
+
+# ─── Notification Banner ───
+notif_text = {
+    "🇬🇧 English": "📌 AI detected 3 new behavioral clusters with high recovery potential.",
+    "🇹🇭 ไทย": "📌 ระบบ AI พบ 3 กลุ่มพฤติกรรมใหม่ที่มีโอกาสกู้คืนหนี้สูง"
+}
+st.markdown(
+    f"""
+    <div style='background-color:#ffeaa7;padding:10px;border-radius:8px;border-left:5px solid #fdcb6e;margin-bottom:15px'>
+        {notif_text[lang]}
+    </div>
+    """, unsafe_allow_html=True
+)
+
+# ─── Title ───
+st.title("🧠 Behavioral Insights" if lang == "🇬🇧 English" else "🧠 การวิเคราะห์พฤติกรรม")
+st.subheader("AI clustering & behavioral pattern detection" if lang == "🇬🇧 English" else "การจับกลุ่มพฤติกรรมและวิเคราะห์โดย AI")
 
 # ─── Load Data ───
-@st.cache_data
-def load_data():
-    df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
-    df["age_group"] = pd.cut(df["age"], bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
-    return df
+df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
 
-df = load_data()
+# ─── Insight Card ───
+insight = {
+    "🇬🇧 English": """
+- Cluster 0 = 'Silent but Pays Late'
+- Cluster 1 = 'Responsive but Avoids'
+- Cluster 2 = 'High-Risk Ignorers'
+""",
+    "🇹🇭 ไทย": """
+- กลุ่ม 0 = 'เงียบแต่จ่ายช้า'
+- กลุ่ม 1 = 'ตอบกลับแต่เลี่ยง'
+- กลุ่ม 2 = 'ไม่ตอบเลยและมีความเสี่ยงสูง'
+"""
+}
+st.info(insight[lang])
 
-# ─── Summary Cards ───
-col1, col2, col3 = st.columns(3)
-col1.metric("Behavior Groups", df["clustering_group"].nunique())
-col2.metric("Most Common Tag", df["response_behavior"].value_counts().idxmax())
-col3.metric("Top Region", df["region"].value_counts().idxmax())
+# ─── Chart: Cluster Distribution ───
+st.markdown("### 🔍 Cluster Distribution" if lang == "🇬🇧 English" else "### 🔍 การกระจายของกลุ่มพฤติกรรม")
 
-# ─── Clustering Overview ───
-st.markdown("### 🔍 Clustering Overview")
-cluster_counts = df["clustering_group"].value_counts().reset_index()
-cluster_counts.columns = ["Group", "Count"]
-fig1 = px.bar(cluster_counts, x="Group", y="Count", color="Group", title="Customer Clustering Distribution")
-st.plotly_chart(fig1, use_container_width=True)
+fig = px.histogram(
+    df,
+    x="clustering_group",
+    color="clustering_group",
+    title="Behavioral Cluster Count" if lang == "🇬🇧 English" else "จำนวนลูกหนี้ในแต่ละกลุ่มพฤติกรรม",
+    color_discrete_sequence=px.colors.qualitative.Set2
+)
+fig.update_layout(bargap=0.3)
+st.plotly_chart(fig, use_container_width=True)
 
-# ─── Grouped Behaviors ───
-st.markdown("### 📋 Behavior by Cluster")
-behavior_group = pd.crosstab(df["clustering_group"], df["response_behavior"], normalize="index") * 100
-st.dataframe(behavior_group.round(1), use_container_width=True)
+# ─── Table View ───
+st.markdown("### 📋 Cluster Sample" if lang == "🇬🇧 English" else "### 📋 ตัวอย่างลูกหนี้แต่ละกลุ่ม")
+sample_df = df[["account_id", "dpd", "loan_type", "response_behavior", "clustering_group"]].head(30)
+sample_df.columns = (
+    ["Account ID", "DPD", "Loan Type", "Behavior", "Cluster"]
+    if lang == "🇬🇧 English"
+    else ["บัญชี", "DPD", "ประเภท", "พฤติกรรม", "กลุ่ม"]
+)
+st.dataframe(sample_df, use_container_width=True)
 
-# ─── Risk Level vs. Behavior ───
-st.markdown("### 📉 Behavior vs. Risk Level")
-risk_behavior = pd.crosstab(df["risk_level"], df["response_behavior"], normalize="index") * 100
-fig2 = px.bar(risk_behavior, barmode="group", title="Risk Level vs. Debtor Behavior", labels={"value": "Percentage", "risk_level": "Risk Level"})
-st.plotly_chart(fig2, use_container_width=True)
-
-# ─── NLP-Generated Tags Summary ───
-st.markdown("### 🏷️ NLP Behavior Tags")
-if "nlp_behavior_tag" in df.columns:
-    tag_counts = df["nlp_behavior_tag"].value_counts().reset_index()
-    tag_counts.columns = ["Behavior Tag", "Count"]
-    fig3 = px.pie(tag_counts, names="Behavior Tag", values="Count", hole=0.4, title="Behavior Tag Distribution")
-    st.plotly_chart(fig3, use_container_width=True)
-else:
-    st.warning("⚠️ NLP behavior tags not found in data.")
-
-# ─── AI Insight Box ───
-st.markdown("### 💬 AI Insight from Behavior")
-st.info("""
-- Group 3 shows high responsiveness to polite reminders via LINE
-- Group 1 has high 'Promise to Pay' tag but low actual payment → consider follow-up within 3 days
-- Cluster 5 tends to ignore calls, prefer email or non-intrusive reminders
-""")
+# ─── Export Button ───
+st.markdown("---")
+st.download_button(
+    "⬇️ Export Behavioral Data" if lang == "🇬🇧 English" else "⬇️ ดาวน์โหลดข้อมูลพฤติกรรม",
+    data=sample_df.to_csv(index=False),
+    file_name="behavioral_insights.csv"
+)
