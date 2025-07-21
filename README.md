@@ -32,3 +32,23 @@ flowen-poc/
 ├── flowen_mock_data_5000_enhanced.csv
 ├── README.md
 └── TOR.txt
+
+
+## 🧠 Data Overview
+
+Mock data file: `flowen_mock_data_5000_enhanced.csv`
+
+- `account_id`, `name`, `age`, `region`, `loan_type`
+- `dpd`, `total_debt`, `monthly_income`
+- `contact_channel`, `response_behavior`, `last_payment_date`, `last_contact_date`
+- `risk_score`, `risk_level`, `ai_risk_score`, `ai_confidence`
+- `journey_type`, `status_paid`, `recovered`
+- Extra behavior and clustering-ready fields included
+
+## 🚀 Quick Start (Local)
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+
+
