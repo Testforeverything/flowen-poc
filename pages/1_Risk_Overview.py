@@ -1,104 +1,104 @@
-# 📄 pages/1_Risk_Overview.py
+# pages/1_Risk_Overview.py
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
-st.set_page_config(page_title="Flowen: Risk Overview", layout="wide")
+# ─── Session Setup ───
+if "lang" not in st.session_state:
+    st.session_state["lang"] = "🇬🇧 English"
+lang = st.session_state["lang"]
 
-flowen_colors = ["#00B894", "#00A2C2", "#0984E3"]
+# ─── Page Config ───
+st.set_page_config(page_title="Risk Overview", layout="wide")
 
-# ─── Load Data ────────────────────────────────
-@st.cache_data
-def load_data():
-    df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
-    df["status_paid"] = df["dpd"].apply(lambda x: "Paid" if x == 0 else "In Progress" if x < 30 else "Stuck")
-    df["age_group"] = pd.cut(df["age"], bins=[0, 25, 35, 45, 100], labels=["<25", "26–35", "36–45", "45+"])
-    if "journey_type" not in df.columns:
-        def map_journey(row):
-            if row["risk_level"] == "High":
-                return "Hardship Assistance"
-            elif row["contact_channel"] == "LINE":
-                return "Default Prevention"
-            elif row["contact_channel"] == "Call":
-                return "Promise to Pay"
-            else:
-                return "General Follow-up"
-        df["journey_type"] = df.apply(map_journey, axis=1)
-    if "ai_confidence" not in df.columns:
-        df["ai_confidence"] = (df["ai_risk_score"] * 100).clip(0, 100)
-    return df
+# ─── Notification Banner ───
+notif_text = {
+    "🇬🇧 English": "📢 Reminder: 12 high-risk accounts require follow-up today.",
+    "🇹🇭 ไทย": "📢 แจ้งเตือน: พบลูกหนี้กลุ่มเสี่ยง 12 รายควรติดตามวันนี้"
+}
+st.markdown(
+    f"""
+    <div style='background-color:#ffeaa7;padding:10px;border-radius:8px;border-left:5px solid #fdcb6e;margin-bottom:15px'>
+        {notif_text[lang]}
+    </div>
+    """, unsafe_allow_html=True
+)
 
-df = load_data()
+# ─── Title ───
+if lang == "🇬🇧 English":
+    st.title("📊 Risk Overview")
+    st.subheader("Portfolio Risk Distribution and Segmentation")
+else:
+    st.title("📊 ภาพรวมความเสี่ยง")
+    st.subheader("การกระจายและการแบ่งกลุ่มความเสี่ยงของลูกหนี้")
 
-# ─── Dashboard Title ───────────────────────────
-st.title("📊 Risk Overview")
+# ─── Load Data ───
+df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
 
-# ─── Top KPI Metrics ───────────────────────────
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Accounts Contacted", f"{len(df):,}")
-col2.metric("Paid Accounts", f"{df[df['dpd'] == 0].shape[0]:,}")
-col3.metric("In Progress", f"{df[df['dpd'].between(1, 29)].shape[0]:,}")
-col4.metric("Stuck (DPD ≥ 30)", f"{df[df['dpd'] >= 30].shape[0]:,}")
-
-# ─── AI Suggestion Feed ────────────────────────
-st.markdown("### 🤖 AI Suggestions")
-with st.expander("Top 5 Accounts Likely to Pay (High Score)"):
-    top_accounts = df.sort_values("ai_risk_score", ascending=False).head(5)[[
-        "account_id", "name", "risk_score", "loan_type", "contact_channel"
-    ]]
-    st.dataframe(top_accounts)
-
-# ─── Segmentation Charts ───────────────────────
+# ─── Layout ───
 col1, col2, col3 = st.columns(3)
 
+# ─── Pie: Risk Level Breakdown ───
 with col1:
-    behavior_seg = df["response_behavior"].value_counts().reset_index()
-    behavior_seg.columns = ["Behavior", "Count"]
-    fig1 = px.pie(behavior_seg, names="Behavior", values="Count", hole=0.4,
-                  color_discrete_sequence=flowen_colors, title="Response Behavior")
-    st.plotly_chart(fig1, use_container_width=True)
+    risk_pie = df["risk_score"].value_counts().reset_index()
+    fig = px.pie(
+        risk_pie,
+        names="index",
+        values="risk_score",
+        title="Risk Score Distribution" if lang == "🇬🇧 English" else "การกระจายคะแนนความเสี่ยง",
+        color_discrete_sequence=px.colors.sequential.Blues
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
+# ─── Bar: Segmentation ───
 with col2:
-    loan_type = df["loan_type"].value_counts().reset_index()
-    loan_type.columns = ["Loan Type", "Count"]
-    fig2 = px.pie(loan_type, names="Loan Type", values="Count", hole=0.3,
-                  color_discrete_sequence=flowen_colors, title="Loan Type Distribution")
+    segment = df["clustering_group"].value_counts().reset_index()
+    fig2 = px.bar(
+        segment,
+        x="index",
+        y="clustering_group",
+        title="Behavioral Segmentation" if lang == "🇬🇧 English" else "การแบ่งกลุ่มพฤติกรรม",
+        labels={"index": "Cluster", "clustering_group": "Count"},
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
     st.plotly_chart(fig2, use_container_width=True)
 
+# ─── Donut: Region Breakdown ───
 with col3:
-    age_group = df.groupby("age_group")["dpd"].mean().reset_index()
-    fig3 = px.bar(age_group, x="age_group", y="dpd",
-                  color_discrete_sequence=flowen_colors,
-                  title="Avg. DPD by Age Group", labels={"dpd": "Days Past Due"})
+    region = df["region"].value_counts().reset_index()
+    fig3 = px.pie(
+        region,
+        names="index",
+        values="region",
+        hole=0.4,
+        title="By Region" if lang == "🇬🇧 English" else "ตามภูมิภาค",
+        color_discrete_sequence=px.colors.sequential.Teal
+    )
     st.plotly_chart(fig3, use_container_width=True)
 
-# ─── Risk-Level vs Recovery ─────────────────────
-st.markdown("### 📈 Risk vs Recovery Rate")
-if "recovered" not in df.columns:
-    import numpy as np
-    np.random.seed(42)
-    df["recovered"] = np.where(df["dpd"] == 0, 1, np.random.binomial(1, 0.6, size=len(df)))
+# ─── KPI Card ───
+st.markdown("---")
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric(
+        label="🟡 Avg. Risk Score" if lang == "🇬🇧 English" else "🟡 คะแนนความเสี่ยงเฉลี่ย",
+        value=round(df["risk_score"].mean(), 2)
+    )
+with col2:
+    st.metric(
+        label="📌 High Risk %", 
+        value=f"{(df['risk_score'] >= 8).mean() * 100:.1f}%" if lang == "🇬🇧 English" else f"{(df['risk_score'] >= 8).mean() * 100:.1f}%"
+    )
+with col3:
+    st.metric(
+        label="📍 Unique Regions" if lang == "🇬🇧 English" else "📍 ภูมิภาคทั้งหมด",
+        value=df["region"].nunique()
+    )
 
-recovery_risk = df.groupby("risk_level")["recovered"].mean().reset_index()
-recovery_risk["Recovery Rate (%)"] = recovery_risk["recovered"] * 100
-fig4 = px.bar(recovery_risk, x="risk_level", y="Recovery Rate (%)", text="Recovery Rate (%)",
-              color="risk_level", color_discrete_sequence=flowen_colors,
-              title="Recovery Rate by Risk Level")
-fig4.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-st.plotly_chart(fig4, use_container_width=True)
-
-# ─── Risk vs Journey Type ───────────────────────
-st.markdown("### 🧭 Journey Strategy by Risk Group")
-journey_risk = df.groupby(["risk_level", "journey_type"]).size().reset_index(name="Count")
-fig5 = px.bar(journey_risk, x="risk_level", y="Count", color="journey_type",
-              barmode="stack", color_discrete_sequence=flowen_colors,
-              title="Journey Allocation by Risk")
-st.plotly_chart(fig5, use_container_width=True)
-
-# ─── Debtor Table ──────────────────────────────
-st.markdown("### 📋 Debtor Summary Table")
-st.dataframe(df[[
-    "account_id", "name", "risk_score", "dpd", "risk_level", "journey_type", "loan_type"
-]].sort_values("dpd", ascending=False).reset_index(drop=True), use_container_width=True)
+# ─── Export Button ───
+st.markdown("---")
+if lang == "🇬🇧 English":
+    st.download_button("⬇️ Export CSV", data=df.to_csv(index=False), file_name="risk_overview.csv")
+else:
+    st.download_button("⬇️ ดาวน์โหลดข้อมูล CSV", data=df.to_csv(index=False), file_name="risk_overview.csv")
