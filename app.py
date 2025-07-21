@@ -1,66 +1,48 @@
+# app.py
 import streamlit as st
 from PIL import Image
 
-# ───── CONFIG ───────────────────────────────────────
-st.set_page_config(page_title="Flowen: AI Debt Collection", layout="wide")
-if "lang" not in st.session_state:
-    st.session_state.lang = "🇬🇧 EN"
+# ─── Setup ─────────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Flowen AI Dashboard", layout="wide")
 
-# ───── LANGUAGE TOGGLE ──────────────────────────────
-lang = st.session_state.lang
-lang_choice = st.selectbox("🌐 Language / ภาษา", ["🇬🇧 EN", "🇹🇭 TH"], index=0 if lang == "🇬🇧 EN" else 1)
-st.session_state.lang = lang_choice
-lang = st.session_state.lang
+# ─── Sidebar Logo and Menu ─────────────────────────────────────────────────────
+with st.sidebar:
+    logo = Image.open("assets/flowen_logo.png")
+    st.image(logo, width=200)
 
-# ───── HEADER ────────────────────────────────────────
-col1, col2 = st.columns([1, 8])
-with col1:
-    st.image("assets/flowen_logo.png", width=100)
-with col2:
-    st.markdown("## Flowen: AI Debt Collection Platform" if lang == "🇬🇧 EN" else "## Flowen: แพลตฟอร์ม AI ติดตามหนี้")
-    st.markdown(":robot_face: Intelligent Recovery Engine with Real-time Insights" if lang == "🇬🇧 EN" else ":robot_face: ระบบติดตามหนี้อัจฉริยะ พร้อมข้อมูลเรียลไทม์")
+    st.markdown("## 📊 Dashboard Menu")
+    page = st.radio(
+        "เลือกหน้า / Select Page",
+        ["🏠 Home", "📈 Risk Overview", "🧭 Journey Management", "📉 Recovery KPI", "🧠 Behavioral Insights"],
+        label_visibility="collapsed"
+    )
 
-st.markdown("---")
+# ─── Language Toggle & Notification (Top Right) ────────────────────────────────
+lang = st.sidebar.selectbox("🌐 Language", ["🇬🇧 English", "🇹🇭 ภาษาไทย"])
+st.session_state["lang"] = lang
 
-# ───── NAVIGATION BUTTONS ────────────────────────────
-st.markdown("### 🔎 Dashboard Modules" if lang == "🇬🇧 EN" else "### 🔎 หน้าหลักของระบบ")
+st.markdown(f"<div style='text-align:right; color:green; font-weight:bold;'>🔔 Notification Center: All systems operational</div>", unsafe_allow_html=True)
 
-colA, colB, colC, colD = st.columns(4)
-with colA:
-    if st.button("📊 Risk Overview"):
-        st.switch_page("pages/1_Risk_Overview.py")
-with colB:
-    if st.button("📍 Journey Management"):
-        st.switch_page("pages/2_Journey_Management.py")
-with colC:
-    if st.button("📈 Recovery KPI"):
-        st.switch_page("pages/3_Recovery_KPI.py")
-with colD:
-    if st.button("🧠 Behavioral Insights"):
-        st.switch_page("pages/4_Behavioral_Insights.py")
-
-st.markdown("---")
-
-# ───── LANDING INFO ─────────────────────────────────
-st.subheader("✨ Platform Capabilities" if lang == "🇬🇧 EN" else "✨ ความสามารถของแพลตฟอร์ม")
-
-if lang == "🇬🇧 EN":
+# ─── Page Router ───────────────────────────────────────────────────────────────
+if page == "🏠 Home":
+    st.title("🌟 Flowen AI Debt Collection Platform")
     st.markdown("""
-- ✅ Predict debtor risk using AI scoring  
-- 🤖 Recommend best debt collection journeys  
-- 📞 Simulate LINE/Voice bot for training/demo  
-- 📊 Visualize behavior, KPI, and segment insights  
-- 📤 Assign debtor into journey with one click  
-""")
-else:
-    st.markdown("""
-- ✅ คาดการณ์ความเสี่ยงลูกหนี้ด้วย AI  
-- 🤖 แนะนำกลยุทธ์ติดตามที่เหมาะสม  
-- 📞 จำลองบอทสนทนา LINE/Voice เพื่อใช้งาน  
-- 📊 วิเคราะห์พฤติกรรมและสถิติการติดตาม  
-- 📤 ส่งลูกหนี้เข้าสู่กลยุทธ์ได้ทันที  
-""")
+        Welcome to **Flowen** — your AI-powered debt recovery assistant.<br>
+        Use the menu on the left to navigate through modules.
+    """, unsafe_allow_html=True)
 
-# ───── FOOTER ───────────────────────────────────────
-st.markdown("---")
-st.caption("© 2025 Flowen.ai | Prototype for Demo Use")
+elif page == "📈 Risk Overview":
+    from pages import page1_risk_overview
+    page1_risk_overview.show()
+
+elif page == "🧭 Journey Management":
+    from pages import page2_journey_management
+    page2_journey_management.show()
+
+elif page == "📉 Recovery KPI":
+    from pages import page3_recovery_kpi
+    page3_recovery_kpi.show()
+
+elif page == "🧠 Behavioral Insights":
+    from pages import page4_behavioral_insights
+    page4_behavioral_insights.show()
