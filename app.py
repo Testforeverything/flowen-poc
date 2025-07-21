@@ -1,91 +1,103 @@
-# app.py
 import streamlit as st
-from PIL import Image
-from io import BytesIO
-import base64
+import pandas as pd
+import plotly.express as px
 
-# ─── Page Config ─────────────────────────────
-st.set_page_config(page_title="Flowen: Debt Intelligence Platform", layout="wide")
+# ─── Session State ───
+if "lang" not in st.session_state:
+    st.session_state["lang"] = "🇬🇧 English"
+if "page" not in st.session_state:
+    st.session_state["page"] = "Home"
 
-# ─── Load Logo as Base64 ─────────────────────
-def get_base64_logo(path):
-    image = Image.open(path)
-    buffer = BytesIO()
-    image.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
+lang = st.session_state["lang"]
 
-logo_base64 = get_base64_logo("flowen_logo.png")
+# ─── Sidebar Navigation ───
+st.sidebar.image("assets/flowen_logo.png", width=200)
+st.sidebar.title("Flowen Dashboard")
 
-# ─── Language Toggle (🇬🇧 / 🇹🇭) ───────────────
-lang = st.selectbox("🌐 Language / ภาษา", options=["🇬🇧 English", "🇹🇭 ไทย"], index=0)
-
-# ─── Realtime Alert ──────────────────────────
-st.markdown(
-    """
-    <div style='background-color:#ffeaa7;padding:10px;border-radius:8px;border-left:5px solid #fdcb6e'>
-        🔔 <b>System Notice:</b> New accounts with High Risk are being added. Review Risk Overview now.
-    </div>
-    """, unsafe_allow_html=True
+menu = st.sidebar.radio(
+    "🔍 Navigate to",
+    [
+        "Home",
+        "Risk Overview",
+        "Journey Management",
+        "Recovery KPI",
+        "Behavioral Insights"
+    ]
 )
+st.session_state["page"] = menu
 
-# ─── Custom Style ─────────────────────────────
-st.markdown(f"""
-<style>
-    html, body, [class*="css"] {{
-        font-family: 'Inter', sans-serif;
-        background-color: #F6F8FA;
-    }}
-    .main-container {{
-        padding-top: 20px;
-    }}
-</style>
-<div style='text-align:left; padding:20px 0 10px 0;'>
-    <img src='data:image/png;base64,{logo_base64}' width='180'/>
-</div>
-""", unsafe_allow_html=True)
+# ─── Language Toggle ───
+lang_option = st.sidebar.selectbox("🌐 Language / ภาษา", ["🇬🇧 English", "🇹🇭 ไทย"])
+st.session_state["lang"] = lang_option
+lang = lang_option
 
-# ─── Landing Content ─────────────────────────
-st.title("📊 Flowen: Debt Intelligence Platform")
-st.subheader("AI-Powered Dashboard for Recovery Strategy & Debtor Insights")
+# ─── Real-Time Notification ───
+if lang == "🇬🇧 English":
+    st.markdown("📢 Welcome back! Use the menu to explore Flowen modules.")
+else:
+    st.markdown("📢 ยินดีต้อนรับ! ใช้เมนูด้านซ้ายเพื่อเข้าสู่แต่ละโมดูล")
 
-st.markdown("---")
+# ─── Load Data ───
+df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
 
-col1, col2 = st.columns(2)
+# ─── Page Rendering ───
 
-with col1:
-    st.markdown("### 🚀 What can you do?")
-    st.markdown("""
-    - 📌 Monitor real-time debt risk and recovery rates
-    - 🧭 Automate journey recommendations based on AI insights
-    - 🧠 Analyze behavioral patterns and payment habits
-    - 📈 Maximize recovery via personalized engagement
-    """)
+if menu == "Home":
+    st.title("👋 Welcome to Flowen" if lang == "🇬🇧 English" else "👋 ยินดีต้อนรับสู่ Flowen")
+    st.markdown(
+        "Your AI-driven debt collection assistant."
+        if lang == "🇬🇧 English"
+        else "ผู้ช่วย AI ด้านการติดตามหนี้ของคุณ"
+    )
+    st.image("assets/flowen_logo.png", width=300)
+    st.success("Select a module on the left to begin." if lang == "🇬🇧 English" else "เลือกโมดูลจากด้านซ้ายเพื่อเริ่มต้นใช้งาน")
 
-with col2:
-    st.markdown("### 🧩 Available Modules")
-    st.success("1️⃣ Risk Overview")
-    st.success("2️⃣ Journey Management")
-    st.success("3️⃣ Recovery KPI")
-    st.success("4️⃣ Behavioral Insights")
+elif menu == "Risk Overview":
+    st.title("📊 Risk Overview" if lang == "🇬🇧 English" else "📊 ภาพรวมความเสี่ยง")
 
-st.markdown("---")
+    risk_count = df["risk_score"].value_counts().sort_index()
+    fig = px.bar(
+        x=risk_count.index,
+        y=risk_count.values,
+        labels={"x": "Risk Score", "y": "Number of Accounts"},
+        title="Risk Score Distribution" if lang == "🇬🇧 English" else "การกระจายของคะแนนความเสี่ยง",
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-# ─── Navigation Buttons ──────────────────────
-st.markdown("### 📂 Go to Module:")
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    if st.button("📊 Risk Overview"):
-        st.session_state["page"] = "pages/1_Risk_Overview.py"
-        st.info("Navigate using sidebar or menu.")
-with col2:
-    if st.button("🧭 Journey Management"):
-        st.session_state["page"] = "pages/2_Journey_Management.py"
-        st.info("Navigate using sidebar or menu.")
-with col3:
-    if st.button("📈 Recovery KPI"):
-        st.session_state["page"] = "pages/3_Recovery_KPI.py"
-        st.info("Navigate using sidebar or menu.")
-with col4:
-    if st.button("🧠 Behavioral Insights"):
-        st.session_state["page"] = "pages/4_Behavioral_Insights.py"
-        st.info("Navigate using sidebar or menu.")
+elif menu == "Journey Management":
+    st.title("🧭 Journey Management" if lang == "🇬🇧 English" else "🧭 จัดการเส้นทางติดตาม")
+
+    st.markdown(
+        "- Segment high-risk accounts\n"
+        "- Recommend personalized follow-up journey\n"
+        "- Auto tag and escalate"
+    )
+
+    st.dataframe(df[["account_id", "risk_score", "ai_risk_score", "response_behavior"]].head(10))
+
+elif menu == "Recovery KPI":
+    st.title("📈 Recovery KPI" if lang == "🇬🇧 English" else "📈 ตัวชี้วัดการกู้คืนหนี้")
+
+    recovery_mock = pd.DataFrame({
+        "Channel": ["Voice", "LINE", "SMS", "Email"],
+        "Recovered": [85000, 105000, 62000, 45000]
+    })
+
+    fig = px.bar(
+        recovery_mock,
+        x="Channel",
+        y="Recovered",
+        title="Recovery by Channel" if lang == "🇬🇧 English" else "ยอดการกู้คืนตามช่องทาง",
+        text="Recovered"
+    )
+    fig.update_traces(textposition="outside")
+    st.plotly_chart(fig, use_container_width=True)
+
+elif menu == "Behavioral Insights":
+    st.title("🧠 Behavioral Insights" if lang == "🇬🇧 English" else "🧠 การวิเคราะห์พฤติกรรม")
+
+    st.markdown("### Cluster Groups" if lang == "🇬🇧 English" else "### กลุ่มพฤติกรรม")
+    fig = px.histogram(df, x="clustering_group", color="clustering_group")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe(df[["account_id", "loan_type", "dpd", "clustering_group"]].sample(10))
