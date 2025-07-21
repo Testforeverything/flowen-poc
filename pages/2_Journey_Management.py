@@ -1,71 +1,45 @@
-# pages/2_Journey_Management.py
-
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# ─── Session Setup ───
-if "lang" not in st.session_state:
-    st.session_state["lang"] = "🇬🇧 English"
-lang = st.session_state["lang"]
-
-# ─── Page Config ───
-st.set_page_config(page_title="Journey Management", layout="wide")
-
-# ─── Notification Banner ───
-notif_text = {
-    "🇬🇧 English": "🧭 AI has updated recommended journey flows for 5 high-risk accounts.",
-    "🇹🇭 ไทย": "🧭 ระบบ AI ได้อัปเดตเส้นทางติดตามหนี้สำหรับลูกหนี้กลุ่มเสี่ยง 5 ราย"
-}
-st.markdown(
-    f"""
-    <div style='background-color:#ffeaa7;padding:10px;border-radius:8px;border-left:5px solid #fdcb6e;margin-bottom:15px'>
-        {notif_text[lang]}
-    </div>
-    """, unsafe_allow_html=True
-)
-
-# ─── Title ───
-st.title("🧭 Journey Management" if lang == "🇬🇧 English" else "🧭 การจัดการเส้นทางติดตามหนี้")
-
-# ─── Load Data ───
 df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
+lang = st.session_state.get("lang", "🇬🇧 EN")
+st.session_state["lang"] = lang
 
-# ─── Journey Strategy Selector ───
-journey_templates = {
-    "🇬🇧 English": ["Call → LINE → Wait 3 Days", "SMS → LINE + Call", "LINE → Email → Escalate"],
-    "🇹🇭 ไทย": ["โทร → LINE → รอ 3 วัน", "SMS → LINE + โทร", "LINE → อีเมล → ส่งต่อเจ้าหน้าที่"]
-}
-selected = st.selectbox(
-    "📂 Select Journey Strategy" if lang == "🇬🇧 English" else "📂 เลือกกลยุทธ์การติดตาม",
-    journey_templates[lang]
-)
+# Notification bar
+if lang == "🇬🇧 EN":
+    st.info("🧠 AI: Recommended follow-up strategies updated.")
+else:
+    st.info("🧠 AI: ระบบแนะนำกลยุทธ์การติดตามอัปเดตแล้ว")
 
-# ─── Explanation Card ───
-st.markdown("---")
-st.markdown("### 🤖 AI Recommendation")
-reason = {
-    "🇬🇧 English": "Based on debtor's past behavior and region success rate, this journey is optimal.",
-    "🇹🇭 ไทย": "จากพฤติกรรมลูกหนี้ในอดีต และอัตราการทวงหนี้สำเร็จในแต่ละภูมิภาค ระบบแนะนำเส้นทางนี้"
-}
-st.info(reason[lang])
+st.title("🧩 Journey Management" if lang == "🇬🇧 EN" else "🧩 การจัดการเส้นทางติดตาม")
 
-# ─── Journey Log Table ───
-st.markdown("---")
-st.markdown("### 📋 Journey Log" if lang == "🇬🇧 English" else "### 📋 ประวัติเส้นทางติดตาม")
+# Funnel Visualization
+funnel_stage = df['journey_stage'].value_counts().reset_index()
+funnel_stage.columns = ['Stage', 'Count']
+fig_funnel = px.funnel(funnel_stage, x='Count', y='Stage',
+                       title="Journey Funnel" if lang == "🇬🇧 EN" else "ภาพรวมเส้นทางการติดตาม")
+st.plotly_chart(fig_funnel, use_container_width=True)
 
-journey_log = df[["account_id", "loan_type", "dpd", "risk_score", "recommended_journey", "ai_confidence"]].copy()
-journey_log.columns = (
-    ["Account ID", "Loan Type", "DPD", "Risk", "Journey", "Confidence"]
-    if lang == "🇬🇧 English"
-    else ["บัญชี", "ประเภทสินเชื่อ", "DPD", "ความเสี่ยง", "เส้นทางติดตาม", "ความมั่นใจของ AI"]
-)
+# AI Journey Recommendation
+st.subheader("🤖 AI Strategy Recommendation" if lang == "🇬🇧 EN" else "🤖 คำแนะนำจาก AI")
+selected_id = st.selectbox("Select Debtor ID", df['account_id'].unique())
+selected_row = df[df['account_id'] == selected_id].iloc[0]
 
-st.dataframe(journey_log.head(30), use_container_width=True)
+strategy = "Send LINE → Wait 2 days → Call" if selected_row['ai_risk_score'] > 0.7 else "Send SMS only"
+confidence = f"{selected_row['ai_confidence']*100:.1f}%"
 
-# ─── Export Button ───
-st.markdown("---")
-st.download_button(
-    "⬇️ Export Journey Log" if lang == "🇬🇧 English" else "⬇️ ดาวน์โหลดประวัติเส้นทาง",
-    data=journey_log.to_csv(index=False),
-    file_name="journey_log.csv"
-)
+st.markdown(f"""
+- **Strategy**: {strategy}
+- **Confidence**: {confidence}
+""")
+
+if st.button("🚀 Apply Journey" if lang == "🇬🇧 EN" else "🚀 ใช้กลยุทธ์นี้"):
+    st.success("Journey applied." if lang == "🇬🇧 EN" else "กลยุทธ์ถูกใช้งานแล้ว")
+
+# Journey Log Table
+st.subheader("📋 Journey Log" if lang == "🇬🇧 EN" else "📋 บันทึกกลยุทธ์")
+st.dataframe(df[['account_id', 'journey_stage', 'ai_risk_score', 'response_behavior']].head(10))
+
+# Export
+st.download_button("📥 Export Log", data=df.to_csv(index=False), file_name="journey_log_export.csv")
