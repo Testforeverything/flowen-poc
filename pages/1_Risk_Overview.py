@@ -1,61 +1,41 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.notification import render_notification_bar
-from utils.language import get_text
 
-# --- Load Data ---
+# Load data
 df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
 
-# --- Language Toggle ---
-if "lang" not in st.session_state:
-    st.session_state["lang"] = "EN"
-lang = st.session_state["lang"]
+# Set language
+lang = st.session_state.get("lang", "🇬🇧 EN")
+st.session_state["lang"] = lang
 
-# --- Page Config ---
-st.set_page_config(page_title="Flowen | Risk Overview", layout="wide")
+# Notification bar
+if lang == "🇬🇧 EN":
+    st.info("🔔 New alert: 12 high-risk debtors need escalation.")
+else:
+    st.info("🔔 แจ้งเตือน: ลูกหนี้ความเสี่ยงสูง 12 รายต้อง Escalate")
 
-# --- Sidebar Logo & Language ---
-st.sidebar.image("assets/flowen_logo.png", use_column_width=True)
-lang_option = st.sidebar.selectbox("Language", ["EN", "TH"], index=0 if lang == "EN" else 1)
-st.session_state["lang"] = lang_option
+# Page title
+st.title("📊 Risk Overview" if lang == "🇬🇧 EN" else "📊 ภาพรวมความเสี่ยง")
 
-# --- Notification ---
-render_notification_bar(lang)
-
-# --- Title ---
-st.title(get_text("Risk Overview", lang))
-
-# --- KPI Cards ---
+# KPI Cards
 col1, col2, col3 = st.columns(3)
-col1.metric(label=get_text("Total Debtors", lang), value=f"{len(df):,}")
-col2.metric(label=get_text("Average DPD", lang), value=f"{df['dpd'].mean():.1f}")
-col3.metric(label=get_text("High Risk %", lang), value=f"{(df['ai_risk_score'] > 0.7).mean() * 100:.1f}%")
+col1.metric("Total Debtors" if lang == "🇬🇧 EN" else "จำนวนลูกหนี้ทั้งหมด", len(df))
+col2.metric("Avg Risk Score", f"{df['ai_risk_score'].mean():.2f}")
+col3.metric("High Risk %", f"{(df['ai_risk_score'] > 0.7).mean() * 100:.1f}%")
 
-# --- Charts ---
-st.subheader(get_text("Risk Segmentation", lang))
-col4, col5, col6 = st.columns(3)
+# Pie chart of risk group
+risk_group_count = df['clustering_group'].value_counts().reset_index()
+risk_group_count.columns = ['Group', 'Count']
+fig_pie = px.pie(risk_group_count, names='Group', values='Count', hole=0.4,
+                 title="Risk Group Distribution" if lang == "🇬🇧 EN" else "การกระจายกลุ่มความเสี่ยง")
+st.plotly_chart(fig_pie, use_container_width=True)
 
-with col4:
-    risk_group = df['clustering_group'].value_counts().reset_index()
-    fig1 = px.pie(risk_group, names='index', values='clustering_group',
-                 title=get_text("Clustering Segments", lang), hole=0.4)
-    st.plotly_chart(fig1, use_container_width=True)
+# Bar chart by Region
+region_risk = df.groupby('region')['ai_risk_score'].mean().reset_index()
+fig_bar = px.bar(region_risk, x='region', y='ai_risk_score',
+                 title="Avg Risk Score by Region" if lang == "🇬🇧 EN" else "คะแนนความเสี่ยงเฉลี่ยตามภูมิภาค")
+st.plotly_chart(fig_bar, use_container_width=True)
 
-with col5:
-    by_loan = df.groupby("loan_type").size().reset_index(name='count')
-    fig2 = px.bar(by_loan, x='loan_type', y='count', color='loan_type',
-                  title=get_text("Loan Type Breakdown", lang))
-    st.plotly_chart(fig2, use_container_width=True)
-
-with col6:
-    by_age = df['age_group'].value_counts().reset_index()
-    fig3 = px.bar(by_age, x='index', y='age_group',
-                  title=get_text("Age Group Distribution", lang))
-    st.plotly_chart(fig3, use_container_width=True)
-
-# --- Debtor Table ---
-st.subheader(get_text("Debtor Table", lang))
-st.dataframe(df[["debtor_id", "name", "dpd", "ai_risk_score", "loan_type", "clustering_group"]].head(20))
-
-# TODO: Add click to open Debtor Profile View when integrated
+# Export
+st.download_button("📥 Export CSV", data=df.to_csv(index=False), file_name="risk_overview_export.csv")
