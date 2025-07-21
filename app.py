@@ -1,17 +1,13 @@
+# app.py
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from PIL import Image
-import base64
 from io import BytesIO
-from streamlit_option_menu import option_menu
+import base64
 
-# ─── Flowen Gradient Color Palette ─────────────────────────────
-flowen_colors = ["#00B894", "#00A2C2", "#0984E3"]
+# ─── Page Config ─────────────────────────────
+st.set_page_config(page_title="Flowen: Debt Intelligence Platform", layout="wide")
 
-# ─── Encode Logo ─────────────────────────────
-
+# ─── Load Logo as Base64 ─────────────────────
 def get_base64_logo(path):
     image = Image.open(path)
     buffer = BytesIO()
@@ -20,67 +16,76 @@ def get_base64_logo(path):
 
 logo_base64 = get_base64_logo("flowen_logo.png")
 
-# ─── Page Config ────────────────────────────
-st.set_page_config(page_title="Flowen: AI Dashboard", layout="wide")
+# ─── Language Toggle (🇬🇧 / 🇹🇭) ───────────────
+lang = st.selectbox("🌐 Language / ภาษา", options=["🇬🇧 English", "🇹🇭 ไทย"], index=0)
 
-# ─── Inject Custom CSS ──────────────────────────
+# ─── Realtime Alert ──────────────────────────
+st.markdown(
+    """
+    <div style='background-color:#ffeaa7;padding:10px;border-radius:8px;border-left:5px solid #fdcb6e'>
+        🔔 <b>System Notice:</b> New accounts with High Risk are being added. Review Risk Overview now.
+    </div>
+    """, unsafe_allow_html=True
+)
+
+# ─── Custom Style ─────────────────────────────
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-    body {{
+    html, body, [class*="css"] {{
         font-family: 'Inter', sans-serif;
-        color: #1C2B36;
         background-color: #F6F8FA;
     }}
-    .main .block-container {{
-        background-color: #F6F8FA !important;
-        padding: 2rem 3rem 3rem 3rem;
-    }}
-    [data-testid="stSidebar"] {{
-        background-color: #0B2A5B;
-    }}
-    [data-testid="stSidebar"] * {{
-        color: white !important;
-    }}
-    .stCard {{
-        background-color: #FFFFFF;
-        padding: 1.5rem;
-        border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1.5rem;
+    .main-container {{
+        padding-top: 20px;
     }}
 </style>
-<div style='padding: 10px 0 10px 10px;'>
-    <img src='data:image/png;base64,{logo_base64}' width='130'/>
+<div style='text-align:left; padding:20px 0 10px 0;'>
+    <img src='data:image/png;base64,{logo_base64}' width='180'/>
 </div>
 """, unsafe_allow_html=True)
 
-# ─── Sidebar Menu ───────────────────────────
-with st.sidebar:
-    selected = option_menu(
-        menu_title="",
-        options=[
-            "Risk Overview",
-            "Journey Management",
-            "Recovery KPI",
-            "Behavioral Insights"
-        ],
-        icons=["bar-chart-line", "bar-chart", "pie-chart", "graph-up"],
-        default_index=0,
-        styles={
-            "container": {"padding": "0!important", "background-color": "#0B2A5B"},
-            "icon": {"color": "white", "font-size": "18px"},
-            "nav-link": {"color": "#F1F1F1", "font-size": "16px", "--hover-color": "#1C3A6B"},
-            "nav-link-selected": {"background-color": "#29C2D1", "color": "#0B2A5B", "font-weight": "bold"},
-        }
-    )
+# ─── Landing Content ─────────────────────────
+st.title("📊 Flowen: Debt Intelligence Platform")
+st.subheader("AI-Powered Dashboard for Recovery Strategy & Debtor Insights")
 
-# ─── Navigation Handler ─────────────────────────
-if selected == "Risk Overview":
-    st.switch_page("pages/1_Risk_Overview.py")
-elif selected == "Journey Management":
-    st.switch_page("pages/2_Journey_Management.py")
-elif selected == "Recovery KPI":
-    st.switch_page("pages/3_Recovery_KPI.py")
-elif selected == "Behavioral Insights":
-    st.switch_page("pages/4_Behavioral_Insights.py")
+st.markdown("---")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("### 🚀 What can you do?")
+    st.markdown("""
+    - 📌 Monitor real-time debt risk and recovery rates
+    - 🧭 Automate journey recommendations based on AI insights
+    - 🧠 Analyze behavioral patterns and payment habits
+    - 📈 Maximize recovery via personalized engagement
+    """)
+
+with col2:
+    st.markdown("### 🧩 Available Modules")
+    st.success("1️⃣ Risk Overview")
+    st.success("2️⃣ Journey Management")
+    st.success("3️⃣ Recovery KPI")
+    st.success("4️⃣ Behavioral Insights")
+
+st.markdown("---")
+
+# ─── Navigation Buttons ──────────────────────
+st.markdown("### 📂 Go to Module:")
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    if st.button("📊 Risk Overview"):
+        st.session_state["page"] = "pages/1_Risk_Overview.py"
+        st.info("Navigate using sidebar or menu.")
+with col2:
+    if st.button("🧭 Journey Management"):
+        st.session_state["page"] = "pages/2_Journey_Management.py"
+        st.info("Navigate using sidebar or menu.")
+with col3:
+    if st.button("📈 Recovery KPI"):
+        st.session_state["page"] = "pages/3_Recovery_KPI.py"
+        st.info("Navigate using sidebar or menu.")
+with col4:
+    if st.button("🧠 Behavioral Insights"):
+        st.session_state["page"] = "pages/4_Behavioral_Insights.py"
+        st.info("Navigate using sidebar or menu.")
