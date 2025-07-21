@@ -1,84 +1,45 @@
-# pages/3_Recovery_KPI.py
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import numpy as np
 
-# ─── Session Setup ───
-if "lang" not in st.session_state:
-    st.session_state["lang"] = "🇬🇧 English"
-lang = st.session_state["lang"]
-
-# ─── Page Config ───
-st.set_page_config(page_title="Recovery KPI", layout="wide")
-
-# ─── Notification Banner ───
-notif_text = {
-    "🇬🇧 English": "📈 Recovery today reached 320,000 THB from 4 channels.",
-    "🇹🇭 ไทย": "📈 วันนี้สามารถกู้คืนหนี้ได้ 320,000 บาทจาก 4 ช่องทาง"
-}
-st.markdown(
-    f"""
-    <div style='background-color:#dff9fb;padding:10px;border-radius:8px;border-left:5px solid #00cec9;margin-bottom:15px'>
-        {notif_text[lang]}
-    </div>
-    """, unsafe_allow_html=True
-)
-
-# ─── Title ───
-st.title("📈 Recovery KPI" if lang == "🇬🇧 English" else "📈 ตัวชี้วัดการกู้คืนหนี้")
-st.subheader("Channel performance and overall effectiveness" if lang == "🇬🇧 English" else "ประสิทธิภาพแต่ละช่องทางและภาพรวม")
-
-# ─── Load Data ───
+# Load data
 df = pd.read_csv("flowen_mock_data_5000_enhanced.csv")
+lang = st.session_state.get("lang", "🇬🇧 EN")
+st.session_state["lang"] = lang
 
-# ─── Mock Recovery KPI Table ───
-channels = ["Voice", "LINE", "SMS", "Email"]
-recovered_amounts = np.random.randint(60000, 120000, size=4)
-success_rate = np.round(np.random.uniform(0.4, 0.75, size=4), 2)
+# Notification bar
+if lang == "🇬🇧 EN":
+    st.info("📈 Updated recovery performance available.")
+else:
+    st.info("📈 อัปเดตประสิทธิภาพการติดตามแล้ว")
 
-data = pd.DataFrame({
-    "Channel": channels,
-    "Recovered (THB)": recovered_amounts,
-    "Success Rate (%)": success_rate * 100
-})
+# Title
+st.title("📈 Recovery KPI" if lang == "🇬🇧 EN" else "📈 ตัวชี้วัดการกู้คืนหนี้")
 
-# ─── Bar Chart ───
-fig = px.bar(
-    data,
-    x="Channel",
-    y="Recovered (THB)",
-    text="Success Rate (%)",
-    color="Channel",
-    title="Recovery by Channel" if lang == "🇬🇧 English" else "การกู้คืนตามช่องทาง",
-    color_discrete_sequence=px.colors.qualitative.Set3
-)
-fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-st.plotly_chart(fig, use_container_width=True)
-
-# ─── KPI Cards ───
+# KPI Section
 col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric(
-        label="📤 Total Recovered" if lang == "🇬🇧 English" else "📤 ยอดกู้คืนรวม",
-        value=f"{data['Recovered (THB)'].sum():,.0f} ฿"
-    )
-with col2:
-    st.metric(
-        label="✅ Avg. Success Rate" if lang == "🇬🇧 English" else "✅ อัตราความสำเร็จเฉลี่ย",
-        value=f"{data['Success Rate (%)'].mean():.1f}%"
-    )
-with col3:
-    st.metric(
-        label="📡 Active Channels" if lang == "🇬🇧 English" else "📡 ช่องทางที่ใช้",
-        value=len(channels)
-    )
+col1.metric("Total Recovered" if lang == "🇬🇧 EN" else "ยอดกู้คืนรวม", f"฿{df['recovered_amount'].sum():,.0f}")
+col2.metric("Avg Recovery per Account", f"฿{df['recovered_amount'].mean():,.2f}")
+col3.metric("% Fully Paid", f"{(df['recovered_amount'] >= df['outstanding_balance']).mean() * 100:.1f}%")
 
-# ─── Export Button ───
-st.markdown("---")
-st.download_button(
-    "⬇️ Export Recovery Report" if lang == "🇬🇧 English" else "⬇️ ดาวน์โหลดรายงานการกู้คืน",
-    data=data.to_csv(index=False),
-    file_name="recovery_kpi.csv"
-)
+# Recovery by channel (Bar chart)
+recovery_by_channel = df.groupby('channel_used')['recovered_amount'].sum().reset_index()
+recovery_by_channel.columns = ['Channel', 'Recovered']
+fig1 = px.bar(recovery_by_channel, x='Channel', y='Recovered', text='Recovered',
+              title="Recovery by Channel" if lang == "🇬🇧 EN" else "การกู้คืนแยกตามช่องทาง")
+fig1.update_traces(texttemplate='฿%{text:,.0f}', textposition='outside')
+fig1.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+st.plotly_chart(fig1, use_container_width=True)
+
+# Daily recovery (Line chart)
+if 'followup_date' in df.columns:
+    df['followup_date'] = pd.to_datetime(df['followup_date'], errors='coerce')
+    recovery_by_day = df.groupby(df['followup_date'].dt.date)['recovered_amount'].sum().reset_index()
+    recovery_by_day.columns = ['Date', 'Recovered']
+    fig2 = px.line(recovery_by_day, x='Date', y='Recovered',
+                   title="Daily Recovery Trend" if lang == "🇬🇧 EN" else "แนวโน้มการกู้คืนรายวัน")
+    st.plotly_chart(fig2, use_container_width=True)
+
+# Export section
+st.download_button("📥 Export KPI Data", data=df.to_csv(index=False),
+                   file_name="recovery_kpi_export.csv")
