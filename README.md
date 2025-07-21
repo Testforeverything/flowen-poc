@@ -1,17 +1,34 @@
-# Flowen - Debt Collection AI PoC
+# Flowen: AI Debt Collection Dashboard (PoC)
 
-This is a Streamlit-based dashboard demo of **Flowen**, a debt collection AI platform.  
-It includes AI risk scoring, behavior analytics, debtor insights, and auto-journey orchestration.
+This project is a fully functional Proof of Concept (PoC) of an AI-powered debt collection dashboard for banks and NBFCs. It integrates real-time risk scoring, behavioral analytics, journey orchestration, and interactive dashboards built with Streamlit.
 
-## Features
-- Thai/English Dashboard
-- AI Risk Score (Mock Data)
-- DPD and Behavior Analytics
-- Debtor Contact View
-- LINE Bot & Voice Bot simulation (PoC)
+## 📊 Key Features
 
-## Getting Started
+- Risk Scoring Dashboard: Risk segmentation, recovery analysis, and AI insights
+- Journey Management: Current journey status, AI recommendation, confidence score, funnel tracking
+- Recovery KPI: Daily recovery trend, channel effectiveness, collector leaderboard
+- Behavioral Insights: Response behavior, repayment patterns, income, channel vs behavior
+- Debtor Profile View: Click to view detailed profile and contact info
+- Language Toggle: 🇬🇧 / 🇹🇭
+- Theming: Custom color scheme based on Flowen brand
+- Data Export: PDF/Excel (optional enhancement)
+- Notifications: (Placeholder - real-time alerts logic ready)
+- Voice & LINE Bot scripts: Draft sample included
 
-```bash
-pip install -r requirements.txt
-streamlit run app.py
+## 📁 File Structure
+
+flowen-poc/
+│
+├── app.py # Main launcher
+├── pages/
+│ ├── 1_Risk_Overview.py
+│ ├── 2_Journey_Management.py
+│ ├── 3_Recovery_KPI.py
+│ └── 4_Behavioral_Insights.py
+│
+├── utils/
+│ └── charts.py # Common Plotly chart configs
+├── flowen_logo.png
+├── flowen_mock_data_5000_enhanced.csv
+├── README.md
+└── TOR.txt
