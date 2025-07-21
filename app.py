@@ -77,10 +77,10 @@ with st.sidebar:
 
 # ─── Navigation Handler ─────────────────────────
 if selected == "Risk Overview":
-    st.switch_page("pages/1_\ud83d\udcca_Risk_Overview.py")
+    st.switch_page("pages/1_Risk_Overview.py")
 elif selected == "Journey Management":
-    st.switch_page("pages/2_\ud83e\uddeb_Journey_Management.py")
+    st.switch_page("pages/2_Journey_Management.py")
 elif selected == "Recovery KPI":
-    st.switch_page("pages/3_\ud83d\udcca_Recovery_KPI.py")
+    st.switch_page("pages/3_Recovery_KPI.py")
 elif selected == "Behavioral Insights":
-    st.switch_page("pages/4_\ud83d\udd1d_Behavioral_Insights.py")
+    st.switch_page("pages/4_Behavioral_Insights.py")
